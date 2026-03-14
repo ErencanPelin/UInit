@@ -1,7 +1,7 @@
 {
-    "name": "com.{{ owner | lower }}.{{ package_name | lower }}",
+    "name": "com.{{ company | lower }}.{{ project_name | lower }}",
     "version": "0.0.1",
-    "displayName": "{{ package_name }}",
+    "displayName": "{{ project_name }}",
     "description": "",
     "unity": "6000.3",
     "unityRelease": "10f1",
@@ -11,8 +11,8 @@
     "dependencies": {},
     "keywords": [],
     "author": {
-        "name": "{{ owner | capitalize }}",
-        "email": "{{ owner_email }}",
+        "name": "{{ author | capitalize }}",
+        "email": "{{ email | lower }}",
         "url": ""
     }
 }

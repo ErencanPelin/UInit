@@ -1,5 +1,6 @@
-pub const OWNER: &str = "eren";
-pub const OWNER_EMAIL: &str = "erenp.business@gmail.com";
+pub const COMPANY: &str = "Eren";
+pub const AUTHOR: &str = "Erencan Pelin";
+pub const EMAIL: &str = "erenp.business@gmail.com";
 
 pub const GAME_PROJECT_TEMPLATE: &'static [&str] = &[
     "/Animations/",
@@ -33,4 +34,4 @@ pub const PACKAGE_PROJECT_TEMPLATE: &'static [&str] = &[
 
 pub const PACKAGE_TEMPLATE_JSON: &str = include_str!("./templates/package-template.jinja2.json");
 pub const GITIGNORE_CONTENT: &str = include_str!("./templates/.gitignore-template");
-pub const LICENSE_CONTENT: &str = include_str!("./templates/LICENSE-template");
+pub const LICENSE_CONTENT: &str = include_str!("./templates/LICENSE-template.jinja2");
