@@ -28,7 +28,9 @@ pub const PACKAGE_PROJECT_TEMPLATE: &'static [&str] = &[
     "/Samples/",
     "/Textures/",
     "/README.md",
-    "/LICENSE.md",
+    "/LICENSE",
 ];
 
 pub const PACKAGE_TEMPLATE_JSON: &str = include_str!("./templates/package-template.jinja2.json");
+pub const GITIGNORE_CONTENT: &str = include_str!("./templates/.gitignore-template");
+pub const LICENSE_CONTENT: &str = include_str!("./templates/LICENSE-template");

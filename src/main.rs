@@ -64,6 +64,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     }
 
+    // Populate LICENCE and gitignore files for Unity
+    let mut licence_path = project_path.clone();
+    licence_path.push("LICENSE");
+    std::fs::write(&licence_path, constants::LICENSE_CONTENT)?;
+
+    let mut gitignore_path = project_path.clone();
+    gitignore_path.push(".gitignore");
+    std::fs::write(&gitignore_path, constants::GITIGNORE_CONTENT)?;
+
     Ok(())
 }
 
