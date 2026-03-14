@@ -1,0 +1,18 @@
+{
+    "name": "com.{{ owner | lower }}.{{ package_name | lower }}",
+    "version": "0.0.1",
+    "displayName": "{{ package_name }}",
+    "description": "",
+    "unity": "6000.3",
+    "unityRelease": "10f1",
+    "documentationUrl": "",
+    "changelogUrl": "",
+    "licensesUrl": "",
+    "dependencies": {},
+    "keywords": [],
+    "author": {
+        "name": "{{ owner | capitalize }}",
+        "email": "{{ owner_email }}",
+        "url": ""
+    }
+}
