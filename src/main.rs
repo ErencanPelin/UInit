@@ -4,7 +4,6 @@ use std::error::Error;
 
 mod cli;
 mod constants;
-mod contexts;
 mod fs;
 mod new_project;
 mod steam;
