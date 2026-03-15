@@ -12,17 +12,23 @@ pub enum Commands {
     /// Initialize a new Unity project from a template
     New {
         /// Name of the project directory
+        #[arg(short, long)]
         name: String,
 
         /// Project type
-        #[arg(short, long, value_enum, default_value_t = ProjectType::Game)]
+        #[arg(short, long, value_enum)]
         template: ProjectType,
 
         /// Project type
+        #[arg(short, long)]
         company: Option<String>,
+
         /// Email address
+        #[arg(short, long)]
         email: Option<String>,
+
         /// Author name
+        #[arg(short, long)]
         author: Option<String>,
     },
     /// Manage Steamworks integration
@@ -42,6 +48,7 @@ pub enum SteamActions {
     /// Setup Steam
     Init {
         /// The Steam AppID (use 480 as a temp value)
+        #[arg(long)]
         app_id: u32,
     },
 }
