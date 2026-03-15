@@ -45,8 +45,10 @@ fn create_from_template(
         // 2. Create file or directory
         if entry.ends_with("/") {
             fs::create_directory(&path)?;
+            println!("Created directory: {}", path.display());
         } else {
             fs::create_file(&path)?;
+            println!("Created file: {}", path.display());
 
             // if we reach this point it means the file was created successfully, so we can write content if needed
             match std::path::Path::new(&path_str)

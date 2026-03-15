@@ -44,3 +44,9 @@ pub const PACKAGE_JINJA: &str = include_str!("./templates/package_template.json.
 pub const LICENSE_JINJA: &str = include_str!("./templates/LICENSE_template.md.jinja2");
 pub const GITIGNORE_TEMPLATE: &str = include_str!("./templates/.gitignore_template");
 pub const CHANGELOG_TEMPLATE: &str = include_str!("./templates/CHANGELOG_template.md");
+
+// Package dependencies for manifest.json modifications
+pub const STEAMWORKS_PACKAGE: (&str, &str) = (
+    "com.rlabrecque.steamworks.net",
+    "https://github.com/rlabrecque/Steamworks.NET.git?path=/com.rlabrecque.steamworks.net#2024.8.0",
+);
