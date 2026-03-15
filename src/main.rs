@@ -42,7 +42,10 @@ fn main() -> Result<(), Box<dyn Error>> {
             new_project(&ctx, &unity_project)?;
         }
         Commands::Steam { action } => match action {
-            SteamActions::Init { app_id } => println!("Setting up Steam ID: {}", app_id),
+            SteamActions::Init { app_id } => {
+                let ctx = steam::SteamContext { app_id: *app_id };
+                steam::init_steam(&ctx, &unity_project);
+            }
         },
         Commands::Ci { action } => {}
     }
