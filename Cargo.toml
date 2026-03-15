@@ -9,3 +9,4 @@ log = "0.4.29"
 clap = { version = "4.0", features = ["derive"] }
 minijinja = "2.17.1"
 chrono = "0.4.44"
+anyhow = "1.0.102"

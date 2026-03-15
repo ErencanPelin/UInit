@@ -1,37 +1,46 @@
+// These values are used as defaults for project creation if their values are not provided via CLI arguments.
 pub const COMPANY: &str = "Eren";
 pub const AUTHOR: &str = "Erencan Pelin";
 pub const EMAIL: &str = "erenp.business@gmail.com";
 
-pub const GAME_PROJECT_TEMPLATE: &'static [&str] = &[
-    "/Animations/",
-    "/Audio/",
-    "/Materials/",
-    "/Meshes/",
-    "/Prefabs/",
-    "/Scenes/",
-    "/Scripts/",
-    "/Scripts/Core/",
-    "/Scripts/Common/",
-    "/Shaders/",
-    "/Textures/",
-    "/README.md",
+/*
+ * Template paths for project creation. The {} in the paths will be replaced with the project name.
+ * End the line with a / to create a directory, otherwise a file will be created.
+*/
+pub const GAME_PROJECT_TEMPLATE: &[&str] = &[
+    "Assets/{}/Animations/",
+    "Assets/{}/Audio/",
+    "Assets/{}/Materials/",
+    "Assets/{}/Meshes/",
+    "Assets/{}/Prefabs/",
+    "Assets/{}/Scenes/",
+    "Assets/{}/Scripts/",
+    "Assets/{}/Scripts/Core/",
+    "Assets/{}/Scripts/Common/",
+    "Assets/{}/Shaders/",
+    "Assets/{}/Textures/",
+    "README.md",
 ];
 
-pub const PACKAGE_PROJECT_TEMPLATE: &'static [&str] = &[
-    "/Animations/",
-    "/Materials/",
-    "/Meshes/",
-    "/Prefabs/",
-    "/Scenes/",
-    "/Scripts/",
-    "/Scripts/Core/",
-    "/Scripts/Common/",
-    "/Samples/",
-    "/Textures/",
-    "/README.md",
-    "/LICENSE",
+pub const PACKAGE_PROJECT_TEMPLATE: &[&str] = &[
+    "Assets/{}/Animations/",
+    "Assets/{}/Materials/",
+    "Assets/{}/Meshes/",
+    "Assets/{}/Prefabs/",
+    "Assets/{}/Scenes/",
+    "Assets/{}/Scripts/",
+    "Assets/{}/Scripts/Core/",
+    "Assets/{}/Scripts/Common/",
+    "Assets/{}/Samples/",
+    "Assets/{}/Textures/",
+    "Assets/{}/README.md",
+    "Assets/{}/CHANGELOG.md",
+    "Assets/{}/LICENSE",
+    "Assets/{}/package.json",
 ];
 
-pub const PACKAGE_TEMPLATE_JSON: &str = include_str!("./templates/package-template.jinja2.json");
-pub const GITIGNORE_CONTENT: &str = include_str!("./templates/.gitignore-template");
-pub const LICENSE_CONTENT: &str = include_str!("./templates/LICENSE-template.jinja2");
+// Template files contents for file creation and jinja rendering.
+pub const PACKAGE_JINJA: &str = include_str!("./templates/package_template.json.jinja2");
+pub const LICENSE_JINJA: &str = include_str!("./templates/LICENSE_template.md.jinja2");
+pub const GITIGNORE_TEMPLATE: &str = include_str!("./templates/.gitignore_template");
+pub const CHANGELOG_TEMPLATE: &str = include_str!("./templates/CHANGELOG_template.md");

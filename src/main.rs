@@ -1,70 +1,52 @@
+use chrono::Datelike;
 use clap::Parser;
-use minijinja::Environment;
 use std::error::Error;
-use std::path::PathBuf;
 
-mod args;
+mod cli;
 mod constants;
 mod contexts;
 mod fs;
-use std::{env, path::Path};
+mod new_project;
+mod steam;
+mod unity_project;
 
-use args::{Cli, ProjectType};
-use constants::{GAME_PROJECT_TEMPLATE, PACKAGE_PROJECT_TEMPLATE, PACKAGE_TEMPLATE_JSON};
-use contexts::ProjectContext;
+use cli::{CiActions, Cli, Commands, SteamActions};
+
+use crate::{
+    constants::{AUTHOR, COMPANY, EMAIL},
+    new_project::{ProjectContext, new_project},
+    unity_project::UnityProject,
+};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
 
-    let current_directory: PathBuf = env::current_dir()?;
-    fs::validate_current_directory(&current_directory)?;
+    let unity_project = UnityProject::detect()?;
+    println!("Running inside: {}", unity_project.root.display());
 
-    let env = Environment::new();
-    let ctx = contexts::get_project_context(&cli);
-
-    // Create the project folder in /Assets with underscore prefix
-    let project_path: PathBuf = current_directory.join("_").join(&cli.project_name);
-    fs::create_directory(&project_path)?;
-
-    match cli.project_type {
-        ProjectType::Game => init_game(&project_path)?,
-        ProjectType::Package => init_package(&project_path, &env, &ctx)?,
-    }
-
-    fs::write_common_files(&project_path, &env, &ctx)?;
-
-    Ok(())
-}
-
-fn create_template(base_path: &Path, template: &'static [&str]) -> std::io::Result<()> {
-    for path_str in template {
-        let path = base_path.join(path_str.strip_prefix("/").unwrap_or_default());
-        if path_str.ends_with("/") {
-            fs::create_directory(&path)?;
-        } else {
-            fs::create_file(&path)?;
+    match &cli.command {
+        Commands::New {
+            name,
+            template,
+            company,
+            email,
+            author,
+        } => {
+            let ctx = ProjectContext {
+                template: template.clone(),
+                project_name: name.as_str(),
+                company: company.as_deref().unwrap_or_else(|| COMPANY),
+                email: email.as_deref().unwrap_or_else(|| EMAIL),
+                author: author.as_deref().unwrap_or_else(|| AUTHOR),
+                year: chrono::Utc::now().year(),
+            };
+            new_project(&ctx, &unity_project)?;
         }
+        Commands::Steam { action } => match action {
+            SteamActions::Init { app_id } => println!("Setting up Steam ID: {}", app_id),
+        },
+        Commands::Ci { action } => {}
     }
-    Ok(())
-}
-
-fn init_package(
-    project_path: &Path,
-    env: &Environment,
-    ctx: &ProjectContext,
-) -> std::io::Result<()> {
-    create_template(&project_path, &PACKAGE_PROJECT_TEMPLATE)?;
-
-    let package_json_path = project_path.join("package.json");
-    let rendered_package_json = fs::render_template(&env, PACKAGE_TEMPLATE_JSON, ctx)
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
-    std::fs::write(package_json_path, rendered_package_json)?;
-
-    Ok(())
-}
-
-fn init_game(project_path: &Path) -> std::io::Result<()> {
-    create_template(&project_path, &GAME_PROJECT_TEMPLATE)?;
 
     Ok(())
 }
