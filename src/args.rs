@@ -27,10 +27,6 @@ pub struct Cli {
     /// Company owner of the project
     #[arg(short, long)]
     pub company: Option<String>,
-
-    /// Just print what would be created (no disk writes)
-    #[arg(long)]
-    pub dry_run: bool,
 }
 
 #[derive(ValueEnum, Clone)]

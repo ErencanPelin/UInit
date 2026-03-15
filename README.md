@@ -7,9 +7,10 @@ The aim of this project is to initialise Unity projects with the core folder str
 ## Features
 - Create all necessary folders in one go
 - Create package manifest for unity packages quickly - uses Jinja2 templating.
+- Create LICENSE files automatically using Jinja2 templating. Currently just works for the BSD 3-clause license.
 
 ## Installation, Setup & Customisation
 Nothing here yet. Still in development
 
-## Using
-Run `uinit` in your terminal and follow the prompts.
+## Geting Started
+Run `uinit --help` in your terminal to get started.
