@@ -8,6 +8,8 @@ The aim of this project is to initialise Unity projects with the core folder str
 - Create all necessary folders in one go
 - Create package manifest for unity packages quickly - uses Jinja2 templating.
 - Create LICENSE files automatically using Jinja2 templating. Currently just works for the BSD 3-clause license.
+- Initialise Steamworks dependencies and steam-appid.txt in one command
+- Create whole feature domains with runtime, editor, test assemblies with a single command
 
 ## Installation, Setup & Customisation
 Nothing here yet. Still in development
@@ -15,9 +17,9 @@ Nothing here yet. Still in development
 ## Geting Started
 Run `uinit --help` in your terminal to get started.
 
-### To tnit a new project 
+### To init a new project 
 ```sh
-uinit new --name <PROJECT_NAME> --template <GAMNE | PACKAGE>
+uinit new --name <PROJECT_NAME> --template <GAME | PACKAGE>
 ```
 
 ### To init steam

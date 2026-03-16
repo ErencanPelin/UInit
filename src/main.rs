@@ -12,7 +12,7 @@ mod unity_project;
 use cli::{CiActions, Cli, Commands, SteamActions};
 
 use crate::{
-    constants::{AUTHOR, COMPANY, EMAIL},
+    constants::{COMPANY, EMAIL, OWNER},
     new_project::{ProjectContext, new_project},
     unity_project::UnityProject,
 };
@@ -36,7 +36,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 project_name: name.as_str(),
                 company: company.as_deref().unwrap_or_else(|| COMPANY),
                 email: email.as_deref().unwrap_or_else(|| EMAIL),
-                author: author.as_deref().unwrap_or_else(|| AUTHOR),
+                author: author.as_deref().unwrap_or_else(|| OWNER),
                 year: chrono::Utc::now().year(),
             };
             new_project(&ctx, &unity_project)?;
@@ -48,6 +48,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
         },
         Commands::Ci { action } => {}
+        Commands::Feature { action } => {}
     }
 
     Ok(())

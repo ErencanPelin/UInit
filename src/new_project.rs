@@ -1,8 +1,8 @@
 use minijinja::{Environment, context};
 
 use crate::constants::{
-    CHANGELOG_TEMPLATE, GAME_PROJECT_TEMPLATE, GITIGNORE_TEMPLATE, LICENSE_JINJA, PACKAGE_JINJA,
-    PACKAGE_PROJECT_TEMPLATE,
+    CHANGELOG_TEMPLATE, GAME_PROJECT_TEMPLATE, GITIGNORE_TEMPLATE, LICENSE_JINJA,
+    NUGET_MOQ_PACKAGE, PACKAGE_JINJA, PACKAGE_PROJECT_TEMPLATE,
 };
 use crate::fs;
 use crate::{cli::ProjectType, unity_project::UnityProject};
@@ -20,12 +20,21 @@ pub fn new_project(
     ctx: &ProjectContext,
     unity_project: &UnityProject,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    // Create template files and folders
     match ctx.template {
         ProjectType::Game => create_from_template(&ctx, &unity_project, &GAME_PROJECT_TEMPLATE)?,
         ProjectType::Package => {
             create_from_template(&ctx, &unity_project, &PACKAGE_PROJECT_TEMPLATE)?
         }
     }
+
+    modify_project_settings(&ctx, &unity_project);
+
+    // Add common packages that are recommended to use for most projects
+    unity_project
+        .add_package(NUGET_MOQ_PACKAGE.0, NUGET_MOQ_PACKAGE.1)
+        .expect("Failed to add Moq package to manifest.json");
+
     Ok(())
 }
 
@@ -89,4 +98,34 @@ fn render_jinja_template(
             year => ctx.year,
         ),
     )
+}
+
+/// Update the ProjectSettings.asset with the new company and product name
+fn modify_project_settings(ctx: &ProjectContext, unity_project: &UnityProject) {
+    let settings_path = unity_project
+        .project_settings_dir()
+        .join("ProjectSettings.asset");
+    let mut settings: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(&settings_path).expect("Failed to read ProjectSettings.asset"),
+    )
+    .expect("Failed to parse ProjectSettings.asset");
+
+    if let Some(player_settings) = settings.get_mut("PlayerSettings") {
+        if let Some(company_name) = player_settings.get_mut("companyName") {
+            *company_name = serde_json::Value::String(ctx.company.to_string());
+        }
+        if let Some(product_name) = player_settings.get_mut("productName") {
+            *product_name = serde_json::Value::String(ctx.project_name.to_string());
+        }
+    }
+
+    std::fs::write(
+        settings_path,
+        serde_json::to_string_pretty(&settings).expect("Failed to serialize ProjectSettings.asset"),
+    )
+    .expect("Failed to write ProjectSettings.asset");
+    println!(
+        "Updated ProjectSettings.asset with company name: '{}' and product name: '{}'.",
+        ctx.company, ctx.project_name
+    );
 }

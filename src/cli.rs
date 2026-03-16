@@ -12,7 +12,6 @@ pub enum Commands {
     /// Initialize a new Unity project from a template
     New {
         /// Name of the project directory
-        #[arg(short, long)]
         name: String,
 
         /// Project type
@@ -23,13 +22,13 @@ pub enum Commands {
         #[arg(short, long)]
         company: Option<String>,
 
-        /// Email address
-        #[arg(short, long)]
-        email: Option<String>,
-
         /// Author name
         #[arg(short, long)]
         author: Option<String>,
+
+        /// Email address
+        #[arg(short, long)]
+        email: Option<String>,
     },
     /// Manage Steamworks integration
     Steam {
@@ -40,6 +39,11 @@ pub enum Commands {
     Ci {
         #[command(subcommand)]
         action: CiActions,
+    },
+    /// Generate feature / module scaffolding
+    Feature {
+        #[command(subcommand)]
+        action: FeatureActions,
     },
 }
 
@@ -59,6 +63,15 @@ pub enum CiActions {
     Create {
         #[arg(short, long, default_value = "github")]
         provider: CiProvider,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum FeatureActions {
+    /// Scaffold a new game feature with required folders, files and assembly definitions
+    Create {
+        /// Name of the feature (e.g. inventory, dialogue, etc.)
+        name: String,
     },
 }
 

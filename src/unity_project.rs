@@ -20,4 +20,41 @@ impl UnityProject {
     pub fn packages_dir(&self) -> std::path::PathBuf {
         self.root.join("Packages")
     }
+
+    pub fn project_settings_dir(&self) -> std::path::PathBuf {
+        self.root.join("ProjectSettings")
+    }
+
+    pub fn add_package(&self, package_name: &str, version: &str) -> anyhow::Result<()> {
+        let manifest_path = self.packages_dir().join("manifest.json");
+        let mut manifest: serde_json::Value = serde_json::from_str(
+            &std::fs::read_to_string(&manifest_path).expect("Failed to read manifest.json"),
+        )
+        .expect("Failed to parse manifest.json");
+
+        // Add package to dependencies if not already present
+        let dependencies = manifest
+            .get_mut("dependencies")
+            .and_then(|d| d.as_object_mut())
+            .expect("manifest.json is missing 'dependencies' object");
+        if !dependencies.contains_key(package_name) {
+            dependencies.insert(
+                package_name.to_string(),
+                serde_json::Value::String(version.to_string()),
+            );
+            std::fs::write(
+                manifest_path,
+                serde_json::to_string_pretty(&manifest).expect("Failed to serialize manifest.json"),
+            )
+            .expect("Failed to write manifest.json");
+            println!("Added {} to manifest.json dependencies.", package_name);
+        } else {
+            println!(
+                "{} is already present in manifest.json dependencies.",
+                package_name
+            );
+        }
+
+        Ok(())
+    }
 }
