@@ -12,7 +12,6 @@ pub struct ProjectContext<'a> {
     pub project_name: &'a str,
     pub company: &'a str,
     pub email: &'a str,
-    pub author: &'a str,
     pub year: i32,
 }
 
@@ -94,7 +93,6 @@ fn render_jinja_template(
             project_name => ctx.project_name,
             company => ctx.company,
             email => ctx.email,
-            author => ctx.author,
             year => ctx.year,
         ),
     )

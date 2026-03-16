@@ -1,6 +1,5 @@
 // These values are used as defaults for project creation if their values are not provided via CLI arguments.
-pub const COMPANY: &str = "Eren";
-pub const OWNER: &str = "Erencan Pelin";
+pub const COMPANY: &str = "ErencanPelin";
 pub const EMAIL: &str = "erenp.business@gmail.com";
 
 /*
