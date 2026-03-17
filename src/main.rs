@@ -4,12 +4,14 @@ use std::error::Error;
 
 mod cli;
 mod constants;
+mod feature;
 mod fs;
+mod metadata;
 mod new_project;
 mod steam;
 mod unity_project;
 
-use cli::{CiActions, Cli, Commands, SteamActions};
+use cli::{CiActions, Cli, Commands, FeatureActions, SteamActions};
 
 use crate::{
     constants::{COMPANY, EMAIL},
@@ -20,7 +22,7 @@ use crate::{
 fn main() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
 
-    let unity_project = UnityProject::detect()?;
+    let mut unity_project = UnityProject::detect()?;
     println!("Running inside: {}", unity_project.root.display());
 
     match &cli.command {
@@ -46,7 +48,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
         },
         Commands::Ci { action } => {}
-        Commands::Feature { action } => {}
+        Commands::Feature { action } => match action {
+            FeatureActions::Create { name } => {
+                feature::init_feature(name, &unity_project)?;
+            }
+        },
     }
 
     Ok(())

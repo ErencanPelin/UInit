@@ -5,6 +5,7 @@ use crate::constants::{
     NUGET_MOQ_PACKAGE, PACKAGE_JINJA, PACKAGE_PROJECT_TEMPLATE,
 };
 use crate::fs;
+use crate::metadata::ProjectMetadata;
 use crate::{cli::ProjectType, unity_project::UnityProject};
 
 pub struct ProjectContext<'a> {
@@ -34,6 +35,16 @@ pub fn new_project(
         .add_package(NUGET_MOQ_PACKAGE.0, NUGET_MOQ_PACKAGE.1)
         .expect("Failed to add Moq package to manifest.json");
 
+    // Persist metadata so subsequent runs (e.g. `uinit feature`) can reconstruct the context
+    let metadata = ProjectMetadata {
+        project_name: ctx.project_name.to_string(),
+        template: ctx.template,
+        company: ctx.company.to_string(),
+        email: ctx.email.to_string(),
+        year: ctx.year,
+    };
+    metadata.save(&unity_project.root)?;
+
     Ok(())
 }
 
@@ -59,6 +70,7 @@ fn create_from_template(
             println!("Created file: {}", path.display());
 
             // if we reach this point it means the file was created successfully, so we can write content if needed
+            // this stops us from overwriting existing files
             match std::path::Path::new(&path_str)
                 .file_name()
                 .and_then(|n| n.to_str())
@@ -103,25 +115,29 @@ fn modify_project_settings(ctx: &ProjectContext, unity_project: &UnityProject) {
     let settings_path = unity_project
         .project_settings_dir()
         .join("ProjectSettings.asset");
-    let mut settings: serde_json::Value = serde_json::from_str(
+
+    // Unity ProjectSettings.asset is YAML, not JSON.
+    // Use serde_yaml so we can safely update the structure.
+    let mut settings: serde_yaml::Value = serde_yaml::from_str(
         &std::fs::read_to_string(&settings_path).expect("Failed to read ProjectSettings.asset"),
     )
     .expect("Failed to parse ProjectSettings.asset");
 
     if let Some(player_settings) = settings.get_mut("PlayerSettings") {
         if let Some(company_name) = player_settings.get_mut("companyName") {
-            *company_name = serde_json::Value::String(ctx.company.to_string());
+            *company_name = serde_yaml::Value::String(ctx.company.to_string());
         }
         if let Some(product_name) = player_settings.get_mut("productName") {
-            *product_name = serde_json::Value::String(ctx.project_name.to_string());
+            *product_name = serde_yaml::Value::String(ctx.project_name.to_string());
         }
     }
 
     std::fs::write(
         settings_path,
-        serde_json::to_string_pretty(&settings).expect("Failed to serialize ProjectSettings.asset"),
+        serde_yaml::to_string(&settings).expect("Failed to serialize ProjectSettings.asset"),
     )
     .expect("Failed to write ProjectSettings.asset");
+
     println!(
         "Updated ProjectSettings.asset with company name: '{}' and product name: '{}'.",
         ctx.company, ctx.project_name
