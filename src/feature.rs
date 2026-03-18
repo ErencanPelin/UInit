@@ -39,12 +39,13 @@ pub fn init_feature(
 
     // Create assembly definition files for the feature domain
     let env = Environment::new();
-    create_assembly_definition(
+    let runtime_assembly_name = create_assembly_definition(
         &runtime_folder,
         constants::ASSEMBLY_DEF_RUNTIME_JINJA,
         &ctx,
         "runtime",
         feature_name,
+        None,
         &env,
     )?;
     create_assembly_definition(
@@ -53,6 +54,7 @@ pub fn init_feature(
         &ctx,
         "editor",
         feature_name,
+        Some(&[runtime_assembly_name.clone()]),
         &env,
     )?;
     create_assembly_definition(
@@ -61,6 +63,7 @@ pub fn init_feature(
         &ctx,
         "tests",
         feature_name,
+        Some(&[runtime_assembly_name.clone()]),
         &env,
     )?;
 
@@ -78,32 +81,36 @@ fn create_assembly_definition(
     ctx: &ProjectContext,
     assembly_type: &str,
     feature_name: &str,
+    dependencies: Option<&[String]>,
     env: &Environment,
-) -> Result<(), Box<dyn std::error::Error>> {
-    let asmdef = render_jinja_template(&template_source, &feature_name, &ctx, &env)?;
-    std::fs::write(
-        path.join(format!(
-            "com.{}.{}.{}.asmdef",
-            ctx.company, &feature_name, &assembly_type
-        )),
-        asmdef,
+) -> Result<String, Box<dyn std::error::Error>> {
+    let asmdef = render_jinja_template(
+        &template_source,
+        &feature_name,
+        &dependencies.unwrap_or(&[]),
+        &ctx,
+        &env,
     )?;
+    let assembly_name_file_name = format!(
+        "com.{}.{}.{}.{}.asmdef",
+        &ctx.company, &ctx.project_name, &feature_name, &assembly_type
+    );
+
+    std::fs::write(path.join(&assembly_name_file_name), asmdef)?;
 
     println!(
         "Created assembly definition: {}",
-        path.join(format!(
-            "com.{}.{}.{}.asmdef",
-            ctx.company, &feature_name, &assembly_type
-        ))
-        .display()
+        path.join(&assembly_name_file_name).display()
     );
 
-    Ok(())
+    // return the assembly name for reference in other asmdefs
+    Ok((assembly_name_file_name.replace(".asmdef", "")).to_string())
 }
 
 fn render_jinja_template(
     template_source: &str,
     feature_name: &str,
+    assembly_references: &[String],
     ctx: &ProjectContext,
     env: &Environment,
 ) -> Result<String, minijinja::Error> {
@@ -112,7 +119,8 @@ fn render_jinja_template(
         context!(
             project_name => ctx.project_name,
             company => ctx.company,
-            feature_name => feature_name
+            feature_name => feature_name,
+            assembly_references => assembly_references,
         ),
     )
 }

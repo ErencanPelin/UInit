@@ -1,7 +1,11 @@
 {
    "name": "com.{{ company | lower }}.{{ project_name | lower }}.{{feature_name | lower }}.tests",
   "rootNamespace": "{{ project_name | capitalize}}",
-  "references": [],
+  "references": [
+    {%- for reference in assembly_references %}
+      "{{ reference | lower }}.asmdef"{{ "," if not loop.last else "" }}
+    {%- endfor %}
+  ],
   "includePlatforms": [
     "Editor"
   ],
