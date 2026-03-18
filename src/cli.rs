@@ -11,21 +11,9 @@ pub struct Cli {
 #[derive(Subcommand)]
 pub enum Commands {
     /// Initialize a new Unity project from a template
-    New {
-        /// Name of the project directory
-        name: String,
-
-        /// Project type
-        #[arg(short, long, value_enum)]
-        template: ProjectType,
-
-        /// Project owner company name (used for namespaces and package names). Use your own name if you're not a company
-        #[arg(short, long)]
-        company: Option<String>,
-
-        /// Email address
-        #[arg(short, long)]
-        email: Option<String>,
+    Project {
+        #[command(subcommand)]
+        action: ProjectActions,
     },
     /// Manage Steamworks integration
     Steam {
@@ -41,6 +29,26 @@ pub enum Commands {
     Feature {
         #[command(subcommand)]
         action: FeatureActions,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum ProjectActions {
+    Init {
+        /// Name of the project directory
+        name: String,
+
+        /// Project type
+        #[arg(short, long, value_enum)]
+        template: ProjectType,
+
+        /// Project owner company name (used for namespaces and package names). Use your own name if you're not a company
+        #[arg(short, long)]
+        company: Option<String>,
+
+        /// Email address
+        #[arg(short, long)]
+        email: Option<String>,
     },
 }
 

@@ -12,7 +12,17 @@ The aim of this project is to initialise Unity projects with the core folder str
 - Create whole feature domains with runtime, editor, test assemblies with a single command
 
 ## Installation, Setup & Customisation
-Nothing here yet. Still in development
+You need Rust installed.
+```sh
+# build the project (make sure it compiles)
+cargo build
+
+# install the package to your machine globally
+cargo install --path .
+
+# testing commands
+cargo run -- project init --company <COMPANY_NAME> <PROJECT NAME>
+```
 
 ## Geting Started
 Run `uinit --help` in your terminal to get started.
