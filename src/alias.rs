@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 
+use anyhow::bail;
 use comfy_table::Table;
 
 use crate::{
+    cli::AliasType,
     config::{AliasEntry, UinitConfig},
     constants::DEFAULT_ALIASES,
     unity_project::{self, UnityProject},
@@ -30,7 +32,7 @@ pub fn get_aliases(config: &UinitConfig) -> HashMap<String, AliasEntry> {
 }
 
 pub fn list_aliases(unity_project: &UnityProject) -> anyhow::Result<()> {
-    let config = UinitConfig::load(&unity_project.root)?;
+    let config: UinitConfig = UinitConfig::load(&unity_project.root)?;
 
     let aliases = get_aliases(&config);
 
@@ -52,5 +54,62 @@ pub fn list_aliases(unity_project: &UnityProject) -> anyhow::Result<()> {
     }
 
     println!("{table}");
+    Ok(())
+}
+
+pub fn add_alias(
+    alias: &String,
+    repo: &String,
+    path: &String,
+    alias_type: &AliasType,
+    unity_project: &UnityProject,
+) -> anyhow::Result<()> {
+    let mut config: UinitConfig = UinitConfig::load(&unity_project.root)?;
+
+    let aliases = get_aliases(&config);
+
+    println!("Adding alias {} to uinit.toml...", alias);
+
+    if aliases.contains_key(alias) {
+        bail!(format!(
+            "Alias {} already exists in local uinit.toml config",
+            alias
+        ))
+    } else {
+        config.aliases.insert(
+            alias.to_string(),
+            AliasEntry {
+                repo: repo.to_string(),
+                path: path.to_string(),
+                alias_type: alias_type.to_string(),
+            },
+        );
+    }
+
+    config.save(&unity_project.root)?;
+
+    println!("Added alias to uinit.toml!");
+    Ok(())
+}
+
+pub fn remove_alias(alias: &String, unity_project: &UnityProject) -> anyhow::Result<()> {
+    let mut config: UinitConfig = UinitConfig::load(&unity_project.root)?;
+
+    let aliases = get_aliases(&config);
+
+    println!("Removing alias {} from uinit.toml...", alias);
+
+    if !aliases.contains_key(alias) {
+        bail!(format!(
+            "Alias {} does not exists in local uinit.toml config",
+            alias
+        ))
+    } else {
+        config.aliases.remove(&alias.to_string());
+    }
+
+    config.save(&unity_project.root)?;
+
+    println!("Removed alias from uinit.toml!");
     Ok(())
 }

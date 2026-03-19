@@ -7,6 +7,7 @@ use std::{collections::HashMap, path::Path};
 pub struct AliasEntry {
     pub repo: String,
     pub path: String,
+    #[serde(rename = "type")]
     pub alias_type: String,
 }
 

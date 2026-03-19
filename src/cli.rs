@@ -1,3 +1,5 @@
+use std::fmt;
+
 use clap::{Parser, Subcommand, ValueEnum};
 use serde::{Deserialize, Serialize, de};
 
@@ -45,8 +47,30 @@ pub enum Commands {
 pub enum AliasActions {
     /// List all available aliases
     List {},
-    // TODO: Add custom  alias
-    // TODO: Rm custom alias
+
+    /// Adds a custom alias override to your local uinit.toml config
+    Add {
+        /// Alias to be used when using ``uinit add``
+        alias: String,
+
+        /// Remote repository URL
+        #[arg(short, long, value_enum)]
+        repo: String,
+
+        /// Path to the module/tool/util from the repository root
+        #[arg(short, long, value_enum)]
+        path: String,
+
+        /// Remote repository URL
+        #[arg(short, long, value_enum)]
+        alias_type: AliasType,
+    },
+
+    /// Removes a custom alias override from your local uinit.toml config
+    Rm {
+        /// Alias to be used when using ``uinit add``
+        alias: String,
+    },
 }
 
 #[derive(Subcommand)]
@@ -106,4 +130,23 @@ pub enum ProjectType {
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 pub enum CiProvider {
     Github,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, ValueEnum)] // Add ValueEnum here
+#[serde(rename_all = "lowercase")]
+pub enum AliasType {
+    Util,
+    Module,
+    Tool,
+}
+
+// Keep your Display implementation for the 'list' table
+impl fmt::Display for AliasType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            AliasType::Util => write!(f, "util"),
+            AliasType::Module => write!(f, "module"),
+            AliasType::Tool => write!(f, "tool"),
+        }
+    }
 }

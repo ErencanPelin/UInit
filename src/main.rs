@@ -15,7 +15,7 @@ mod unity_project;
 use cli::{CiActions, Cli, Commands, FeatureActions, SteamActions};
 
 use crate::{
-    cli::ProjectActions,
+    cli::{AliasActions, ProjectActions},
     constants::{COMPANY, EMAIL},
     new_project::{ProjectContext, new_project},
     unity_project::UnityProject,
@@ -60,9 +60,16 @@ fn main() -> anyhow::Result<()> {
         Commands::Add { alias } => {
             add::handle_add(alias, &unity_project)?;
         }
-        Commands::Alias { action } => {
-            alias::list_aliases(&unity_project)?;
-        }
+        Commands::Alias { action } => match action {
+            AliasActions::List {} => alias::list_aliases(&unity_project)?,
+            AliasActions::Add {
+                alias,
+                repo,
+                path,
+                alias_type,
+            } => alias::add_alias(&alias, &repo, &path, &alias_type, &unity_project)?,
+            AliasActions::Rm { alias } => alias::remove_alias(&alias, &unity_project)?,
+        },
     }
 
     Ok(())
