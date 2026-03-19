@@ -1,6 +1,5 @@
 use chrono::Datelike;
 use clap::Parser;
-use std::error::Error;
 
 mod add;
 mod alias;
@@ -12,7 +11,7 @@ mod fs;
 mod new_project;
 mod steam;
 mod unity_project;
-use cli::{CiActions, Cli, Commands, FeatureActions, SteamActions};
+use cli::{Cli, Commands, FeatureActions, SteamActions};
 
 use crate::{
     cli::{AliasActions, ProjectActions},
@@ -24,7 +23,7 @@ use crate::{
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
-    let mut unity_project = UnityProject::detect()?;
+    let unity_project = UnityProject::detect()?;
     println!("Running inside: {}", unity_project.root.display());
 
     match &cli.command {
@@ -48,10 +47,10 @@ fn main() -> anyhow::Result<()> {
         Commands::Steam { action } => match action {
             SteamActions::Init { app_id } => {
                 let ctx = steam::SteamContext { app_id: *app_id };
-                steam::init_steam(&ctx, &unity_project);
+                steam::init_steam(&ctx, &unity_project)?;
             }
         },
-        Commands::Ci { action } => {}
+        Commands::Ci { action: _ } => {}
         Commands::Feature { action } => match action {
             FeatureActions::Create { name } => {
                 feature::init_feature(name, &unity_project)?;

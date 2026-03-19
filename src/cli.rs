@@ -1,7 +1,7 @@
 use std::fmt;
 
 use clap::{Parser, Subcommand, ValueEnum};
-use serde::{Deserialize, Serialize, de};
+use serde::{Deserialize, Serialize};
 
 #[derive(Parser)]
 #[command(author, version, about = "Bootstrap Unity projects faster", long_about = None)]

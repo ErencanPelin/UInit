@@ -7,7 +7,7 @@ use crate::{
     cli::AliasType,
     config::{AliasEntry, UinitConfig},
     constants::DEFAULT_ALIASES,
-    unity_project::{self, UnityProject},
+    unity_project::UnityProject,
 };
 
 pub fn get_aliases(config: &UinitConfig) -> HashMap<String, AliasEntry> {

@@ -5,7 +5,7 @@ use std::{collections::HashMap, path::Path, process::Command};
 use crate::{
     alias,
     config::{AliasEntry, UinitConfig},
-    constants::{self, DEFAULT_ALIASES},
+    constants::{self},
     feature::create_assembly_definition,
     fs,
     new_project::ProjectContext,
