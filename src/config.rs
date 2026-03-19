@@ -29,19 +29,19 @@ pub struct UinitConfig {
 
 impl UinitConfig {
     pub fn load(dir: &Path) -> anyhow::Result<Self> {
-        let path = dir.join("unitool.toml");
+        let path = dir.join("uinit.toml");
         let text = std::fs::read_to_string(&path)
             .with_context(|| format!("Failed to read config file at {:?}", path))?;
 
         let config: Self = toml::from_str(&text)
-            .context("Failed to parse unitool.toml. Please check your TOML syntax.")?;
+            .context("Failed to parse uinit.toml. Please check your TOML syntax.")?;
 
         Ok(config)
     }
 
     // TODO: limitation here is if something goes wrong mid-write
     pub fn save(&self, dir: &Path) -> anyhow::Result<()> {
-        let path = dir.join("unitool.toml");
+        let path = dir.join("uinit.toml");
         let text = toml::to_string_pretty(self)?;
         std::fs::write(&path, text)
             .with_context(|| format!("Failed to write config file to {:?}", path))?;
