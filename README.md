@@ -10,19 +10,10 @@ The aim of this project is to initialise Unity projects with the core folder str
 - Create LICENSE files automatically using Jinja2 templating. Currently just works for the BSD 3-clause license.
 - Initialise Steamworks dependencies and steam-appid.txt in one command
 - Create whole feature domains with runtime, editor, test assemblies with a single command
+- Import default or custom modules into your project with a single command. Imports modules as part of your project, not just a package
 
-## Installation, Setup & Customisation
-You need Rust installed.
-```sh
-# build the project (make sure it compiles)
-cargo build
-
-# install the package to your machine globally
-cargo install --path .
-
-# testing commands
-cargo run -- project init --company <COMPANY_NAME> <PROJECT NAME>
-```
+## Developing
+See [DEVELOPING.md](/DEVELOPING.md)
 
 ## Geting Started
 Run `uinit --help` in your terminal to get started.
@@ -58,4 +49,20 @@ uinit alias list
 uinit add <ALIAS>
 # e.g.
 uinit add statemachines
+```
+
+### To add or customise your own aliases and point them to your own code
+```sh
+# add custom alias or alias override
+uinit alias add --repo <REPO_HTTP_URL> --path <PATH_TO_MODULE_FROM_REPO_ROOT> --alias-type <UTIL | TOOL | MODULE> <ALIAS_NAME>
+# e.g.
+uinit alias add --repo https://github.com/ErencanPelin/Unity-Utils --path /Utils/Core --alias-type util core-utils
+
+# remove custom aliases
+uinit alias rm <ALIAS_NAME>
+# e.g.
+uinit alias rm core-utils
+
+# list available aliases
+uinit alias list
 ```
