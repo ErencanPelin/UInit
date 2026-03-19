@@ -56,3 +56,39 @@ pub const STEAMWORKS_PACKAGE: (&str, &str) = (
     "https://github.com/rlabrecque/Steamworks.NET.git?path=/com.rlabrecque.steamworks.net#2024.8.0",
 );
 pub const NUGET_MOQ_PACKAGE: (&str, &str) = ("nuget.moq", "2.0.0");
+
+// Aliases for commonly used code that are fetched from external repositories.
+// The key is the alias typed by the user, the value is a tuple of (repo_url, path_in_repo).
+pub const DEFAULT_ALIASES: &[(&str, &str, &str, &str)] = &[
+    (
+        "core",
+        "https://github.com/ErencanPelin/Unity-Utils",
+        "Utils/Core/",
+        "util",
+    ),
+    (
+        "predicates",
+        "https://github.com/ErencanPelin/Unity-Utils",
+        "Utils/Predicates/",
+        "util",
+    ),
+    // TODO: these modules are not setup in the unity-utils repo yet
+    // (
+    //     "interaction",
+    //     "https://github.com/ErencanPelin/Unity-Utils",
+    //     "Modules/Interactions/",
+    //     "module",
+    // ),
+    // (
+    //     "statemachines",
+    //     "https://github.com/ErencanPelin/Unity-Utils",
+    //     "Modules/StateMachines/",
+    //     "module",
+    // ),
+    (
+        "blender-exporter",
+        "https://github.com/ErencanPelin/Unity-Utils",
+        "Tools/blender_export.py",
+        "tool",
+    ),
+];

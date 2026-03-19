@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand, ValueEnum};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de};
 
 #[derive(Parser)]
 #[command(author, version, about = "Bootstrap Unity projects faster", long_about = None)]
@@ -30,6 +30,23 @@ pub enum Commands {
         #[command(subcommand)]
         action: FeatureActions,
     },
+    /// Add utils or features to the project using predefined aliases
+    Add {
+        /// Alias for the module to be added. Use ``uinit alias list`` to see available options
+        alias: String,
+    },
+    Alias {
+        #[command(subcommand)]
+        action: AliasActions,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum AliasActions {
+    /// List all available aliases
+    List {},
+    // TODO: Add custom  alias
+    // TODO: Rm custom alias
 }
 
 #[derive(Subcommand)]

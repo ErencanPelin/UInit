@@ -1,11 +1,13 @@
+use std::collections::HashMap;
+
 use minijinja::{Environment, context};
 
+use crate::config::{ProjectMetadata, UinitConfig};
 use crate::constants::{
     CHANGELOG_TEMPLATE, GAME_PROJECT_TEMPLATE, GITIGNORE_TEMPLATE, LICENSE_JINJA,
     NUGET_MOQ_PACKAGE, PACKAGE_JINJA, PACKAGE_PROJECT_TEMPLATE,
 };
 use crate::fs;
-use crate::metadata::ProjectMetadata;
 use crate::{cli::ProjectType, unity_project::UnityProject};
 
 pub struct ProjectContext<'a> {
@@ -16,10 +18,7 @@ pub struct ProjectContext<'a> {
     pub year: i32,
 }
 
-pub fn new_project(
-    ctx: &ProjectContext,
-    unity_project: &UnityProject,
-) -> Result<(), Box<dyn std::error::Error>> {
+pub fn new_project(ctx: &ProjectContext, unity_project: &UnityProject) -> anyhow::Result<()> {
     // Create template files and folders
     match ctx.template {
         ProjectType::Game => create_from_template(&ctx, &unity_project, &GAME_PROJECT_TEMPLATE)?,
@@ -36,14 +35,17 @@ pub fn new_project(
         .expect("Failed to add Moq package to manifest.json");
 
     // Persist metadata so subsequent runs (e.g. `uinit feature`) can reconstruct the context
-    let metadata = ProjectMetadata {
-        project_name: ctx.project_name.to_string(),
-        template: ctx.template,
-        company: ctx.company.to_string(),
-        email: ctx.email.to_string(),
-        year: ctx.year,
+    let config = UinitConfig {
+        project: ProjectMetadata {
+            project_name: ctx.project_name.to_string(),
+            template: ctx.template,
+            company: ctx.company.to_string(),
+            email: ctx.email.to_string(),
+            year: ctx.year,
+        },
+        aliases: HashMap::new(),
     };
-    metadata.save(&unity_project.root)?;
+    config.save(&unity_project.root)?;
 
     Ok(())
 }
@@ -52,7 +54,7 @@ fn create_from_template(
     ctx: &ProjectContext,
     unity_project: &UnityProject,
     template: &[&str],
-) -> std::io::Result<()> {
+) -> anyhow::Result<()> {
     // new environemtn for each project creation to avoid caching issues with different contexts
     let env = Environment::new();
 
@@ -98,7 +100,7 @@ fn render_jinja_template(
     template_source: &str,
     ctx: &ProjectContext,
     env: &Environment,
-) -> Result<String, minijinja::Error> {
+) -> anyhow::Result<String, minijinja::Error> {
     env.render_str(
         template_source,
         context!(

@@ -2,15 +2,16 @@ use chrono::Datelike;
 use clap::Parser;
 use std::error::Error;
 
+mod add;
+mod alias;
 mod cli;
+mod config;
 mod constants;
 mod feature;
 mod fs;
-mod metadata;
 mod new_project;
 mod steam;
 mod unity_project;
-
 use cli::{CiActions, Cli, Commands, FeatureActions, SteamActions};
 
 use crate::{
@@ -20,7 +21,7 @@ use crate::{
     unity_project::UnityProject,
 };
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
     let mut unity_project = UnityProject::detect()?;
@@ -56,6 +57,12 @@ fn main() -> Result<(), Box<dyn Error>> {
                 feature::init_feature(name, &unity_project)?;
             }
         },
+        Commands::Add { alias } => {
+            add::handle_add(alias, &unity_project)?;
+        }
+        Commands::Alias { action } => {
+            alias::list_aliases(&unity_project)?;
+        }
     }
 
     Ok(())

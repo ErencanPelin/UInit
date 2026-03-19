@@ -27,11 +27,11 @@ cargo run -- project init --company <COMPANY_NAME> <PROJECT NAME>
 ## Geting Started
 Run `uinit --help` in your terminal to get started.
 
-### To init a new project 
+### To setup UInit in your Unity project
 ```sh
-uinit new --template <GAME | PACKAGE> <PROJECT_NAME>
+uinit project init --template <GAME | PACKAGE> <PROJECT_NAME>
 # e.g. with all optional fields
-uinit new --template package --company ErencanPelin --email myemail@mailserver.com MyNewPackage
+uinit project init --template package --company ErencanPelin --email myemail@mailserver.com MyNewPackage
 ```
 
 ### To init steam
@@ -47,4 +47,15 @@ A feature domain lives inside /Scripts. This command creates sub folders for the
 uinit feature create <FEATURE_NAME>
 # e.g.
 uinit feature create MyNewFeature
+```
+
+### To import predefined tool scripts, utils or feature modules
+```sh
+# list all aliases and their config
+uinit alias list
+
+# import a tool/feature/util by its alias
+uinit add <ALIAS>
+# e.g.
+uinit add statemachines
 ```

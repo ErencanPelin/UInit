@@ -1,23 +1,19 @@
 use std::path::Path;
 
 use crate::{
-    constants, fs, metadata::ProjectMetadata, new_project::ProjectContext,
-    unity_project::UnityProject,
+    config::UinitConfig, constants, fs, new_project::ProjectContext, unity_project::UnityProject,
 };
 use minijinja::{Environment, context};
 
-pub fn init_feature(
-    feature_name: &str,
-    unity_project: &UnityProject,
-) -> Result<(), Box<dyn std::error::Error>> {
+pub fn init_feature(feature_name: &str, unity_project: &UnityProject) -> anyhow::Result<()> {
     // Reconstruct the project context from existing metadata so feature generation can run later.
-    let metadata = ProjectMetadata::load(&unity_project.root)?;
+    let config = UinitConfig::load(&unity_project.root)?;
     let ctx = ProjectContext {
-        template: metadata.template,
-        project_name: metadata.project_name.as_str(),
-        company: metadata.company.as_str(),
-        email: metadata.email.as_str(),
-        year: metadata.year,
+        template: config.project.template,
+        project_name: config.project.project_name.as_str(),
+        company: config.project.company.as_str(),
+        email: config.project.email.as_str(),
+        year: config.project.year,
     };
 
     // Create folders for feature domain inside /Assets/<ProjectName>/Scripts
@@ -30,11 +26,11 @@ pub fn init_feature(
     let editor_folder = feature_folder.join("Editor");
     let tests_folder = feature_folder.join("Tests");
 
-    fs::create_directory(&runtime_folder).map_err(|e| Box::new(e))?;
+    fs::create_directory(&runtime_folder)?;
     println!("Created directory: {}", runtime_folder.display());
-    fs::create_directory(&editor_folder).map_err(|e| Box::new(e))?;
+    fs::create_directory(&editor_folder)?;
     println!("Created directory: {}", editor_folder.display());
-    fs::create_directory(&tests_folder).map_err(|e| Box::new(e))?;
+    fs::create_directory(&tests_folder)?;
     println!("Created directory: {}", tests_folder.display());
 
     // Create assembly definition files for the feature domain
@@ -75,7 +71,8 @@ pub fn init_feature(
     Ok(())
 }
 
-fn create_assembly_definition(
+// TODO: move to a shared folder
+pub fn create_assembly_definition(
     path: &Path,
     template_source: &str,
     ctx: &ProjectContext,
@@ -83,7 +80,7 @@ fn create_assembly_definition(
     feature_name: &str,
     dependencies: Option<&[String]>,
     env: &Environment,
-) -> Result<String, Box<dyn std::error::Error>> {
+) -> anyhow::Result<String> {
     let asmdef = render_jinja_template(
         &template_source,
         &feature_name,
@@ -94,7 +91,8 @@ fn create_assembly_definition(
     let assembly_name_file_name = format!(
         "com.{}.{}.{}.{}.asmdef",
         &ctx.company, &ctx.project_name, &feature_name, &assembly_type
-    );
+    )
+    .to_lowercase();
 
     std::fs::write(path.join(&assembly_name_file_name), asmdef)?;
 
@@ -113,7 +111,7 @@ fn render_jinja_template(
     assembly_references: &[String],
     ctx: &ProjectContext,
     env: &Environment,
-) -> Result<String, minijinja::Error> {
+) -> anyhow::Result<String, minijinja::Error> {
     env.render_str(
         template_source,
         context!(
