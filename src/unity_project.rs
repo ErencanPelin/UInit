@@ -1,3 +1,5 @@
+use anyhow::Context;
+
 pub struct UnityProject {
     pub root: std::path::PathBuf,
 }
@@ -28,15 +30,17 @@ impl UnityProject {
     pub fn add_package(&self, package_name: &str, version: &str) -> anyhow::Result<()> {
         let manifest_path = self.packages_dir().join("manifest.json");
         let mut manifest: serde_json::Value = serde_json::from_str(
-            &std::fs::read_to_string(&manifest_path).expect("Failed to read manifest.json"),
+            &std::fs::read_to_string(&manifest_path)
+                .with_context(|| "Failed to read manifest.json")?,
         )
-        .expect("Failed to parse manifest.json");
+        .with_context(|| "Failed to parse manifest.json")?;
 
         // Add package to dependencies if not already present
         let dependencies = manifest
             .get_mut("dependencies")
             .and_then(|d| d.as_object_mut())
-            .expect("manifest.json is missing 'dependencies' object");
+            .with_context(|| "manifest.json is missing 'dependencies' object")?;
+
         if !dependencies.contains_key(package_name) {
             dependencies.insert(
                 package_name.to_string(),
@@ -44,9 +48,10 @@ impl UnityProject {
             );
             std::fs::write(
                 manifest_path,
-                serde_json::to_string_pretty(&manifest).expect("Failed to serialize manifest.json"),
+                serde_json::to_string_pretty(&manifest)
+                    .with_context(|| "Failed to serialize manifest.json")?,
             )
-            .expect("Failed to write manifest.json");
+            .with_context(|| "Failed to write manifest.json")?;
             println!("Added {} to manifest.json dependencies.", package_name);
         } else {
             println!(

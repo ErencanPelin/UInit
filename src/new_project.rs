@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use anyhow::Context;
 use minijinja::{Environment, context};
 
 use crate::config::{ProjectMetadata, UinitConfig};
@@ -21,18 +22,19 @@ pub struct ProjectContext<'a> {
 pub fn new_project(ctx: &ProjectContext, unity_project: &UnityProject) -> anyhow::Result<()> {
     // Create template files and folders
     match ctx.template {
-        ProjectType::Game => create_from_template(&ctx, &unity_project, &GAME_PROJECT_TEMPLATE)?,
+        ProjectType::Game => create_from_template(&ctx, &unity_project, &GAME_PROJECT_TEMPLATE),
         ProjectType::Package => {
-            create_from_template(&ctx, &unity_project, &PACKAGE_PROJECT_TEMPLATE)?
+            create_from_template(&ctx, &unity_project, &PACKAGE_PROJECT_TEMPLATE)
         }
     }
+    .with_context(|| format!("Failed to create from project template {:?}", ctx.template))?;
 
     modify_project_settings(&ctx, &unity_project);
 
     // Add common packages that are recommended to use for most projects
     unity_project
         .add_package(NUGET_MOQ_PACKAGE.0, NUGET_MOQ_PACKAGE.1)
-        .expect("Failed to add Moq package to manifest.json");
+        .context("Failed to add Moq package to manifest.json")?;
 
     // Persist metadata so subsequent runs (e.g. `uinit feature`) can reconstruct the context
     let config = UinitConfig {
@@ -77,17 +79,23 @@ fn create_from_template(
                 .file_name()
                 .and_then(|n| n.to_str())
             {
-                Some("CHANGELOG.md") => std::fs::write(path, CHANGELOG_TEMPLATE)?,
-                Some(".gitignore") => std::fs::write(path, GITIGNORE_TEMPLATE)?,
+                Some("CHANGELOG.md") => std::fs::write(&path, CHANGELOG_TEMPLATE)
+                    .with_context(|| format!("Failed to write changelog.md at {:?}", path))?,
+
+                Some(".gitignore") => std::fs::write(&path, GITIGNORE_TEMPLATE)
+                    .with_context(|| format!("Failed to write .gitignore at {:?}", path))?,
+
                 Some("LICENSE") => {
                     let rendered_license = render_jinja_template(LICENSE_JINJA, &ctx, &env)
                         .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
-                    std::fs::write(path, rendered_license)?;
+                    std::fs::write(&path, rendered_license)
+                        .with_context(|| format!("Failed to write license at {:?}", path))?;
                 }
                 Some("package.json") => {
                     let rendered_package_json = render_jinja_template(PACKAGE_JINJA, &ctx, &env)
                         .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
-                    std::fs::write(path, rendered_package_json)?;
+                    std::fs::write(&path, rendered_package_json)
+                        .with_context(|| format!("Failed to write package.json at {:?}", path))?;
                 }
                 _ => {}
             }

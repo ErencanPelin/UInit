@@ -3,6 +3,7 @@ use std::path::Path;
 use crate::{
     config::UinitConfig, constants, fs, new_project::ProjectContext, unity_project::UnityProject,
 };
+use anyhow::{Context, bail};
 use minijinja::{Environment, context};
 
 pub fn init_feature(feature_name: &str, unity_project: &UnityProject) -> anyhow::Result<()> {
@@ -21,6 +22,10 @@ pub fn init_feature(feature_name: &str, unity_project: &UnityProject) -> anyhow:
         .root
         .join(format!("Assets/{}/Scripts", ctx.project_name))
         .join(feature_name);
+
+    if feature_folder.exists() {
+        bail!(format!("Feature {} is already defined.", feature_name))
+    }
 
     let runtime_folder = feature_folder.join("Runtime");
     let editor_folder = feature_folder.join("Editor");
@@ -63,11 +68,6 @@ pub fn init_feature(feature_name: &str, unity_project: &UnityProject) -> anyhow:
         &env,
     )?;
 
-    // TODO: we need to link the assemblies together so that editor and tests
-    // can reference runtime assembly. This requires modifying the references array in the asmdef files
-    // ideally we reference the GUID but we don't have access to that until Unity generates it, so we should
-    // access by name
-
     Ok(())
 }
 
@@ -87,7 +87,15 @@ pub fn create_assembly_definition(
         &dependencies.unwrap_or(&[]),
         &ctx,
         &env,
-    )?;
+    )
+    .with_context(|| {
+        format!(
+            "Failed when trying to render Jinja2 template for assembly definition.\n
+             Assembly Type: {}",
+            &assembly_type
+        )
+    })?;
+
     let assembly_name_file_name = format!(
         "com.{}.{}.{}.{}.asmdef",
         &ctx.company, &ctx.project_name, &feature_name, &assembly_type
@@ -111,8 +119,8 @@ fn render_jinja_template(
     assembly_references: &[String],
     ctx: &ProjectContext,
     env: &Environment,
-) -> anyhow::Result<String, minijinja::Error> {
-    env.render_str(
+) -> anyhow::Result<String> {
+    let rendered = env.render_str(
         template_source,
         context!(
             project_name => ctx.project_name,
@@ -120,5 +128,7 @@ fn render_jinja_template(
             feature_name => feature_name,
             assembly_references => assembly_references,
         ),
-    )
+    )?;
+
+    Ok(rendered)
 }

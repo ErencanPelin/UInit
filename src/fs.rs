@@ -1,8 +1,11 @@
 use std::path::Path;
 
+use anyhow::Context;
+
 /// Creates the whole directory structure based on the path provided.
 pub fn create_directory(path: &Path) -> anyhow::Result<()> {
-    std::fs::create_dir_all(path)?;
+    std::fs::create_dir_all(&path)
+        .with_context(|| format!("Failed to create directory at {:?}", path))?;
     Ok(())
 }
 
@@ -28,8 +31,10 @@ pub fn copy_dir_recursive(src: &Path, dst: &Path) -> anyhow::Result<()> {
         if file_type.is_dir() {
             copy_dir_recursive(&entry.path(), &dest_path)?;
         } else {
-            std::fs::copy(&entry.path(), &dest_path)?;
+            std::fs::copy(&entry.path(), dest_path)?;
         }
     }
     Ok(())
 }
+
+// TODO: a shared function to write files with proper error handling
