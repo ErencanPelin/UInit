@@ -29,7 +29,7 @@ pub fn new_project(ctx: &ProjectContext, unity_project: &UnityProject) -> anyhow
     }
     .with_context(|| format!("Failed to create from project template {:?}", ctx.template))?;
 
-    modify_project_settings(&ctx, &unity_project);
+    modify_project_settings(&ctx, &unity_project)?;
 
     // Add common packages that are recommended to use for most projects
     unity_project
@@ -87,13 +87,13 @@ fn create_from_template(
 
                 Some("LICENSE") => {
                     let rendered_license = render_jinja_template(LICENSE_JINJA, &ctx, &env)
-                        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+                        .with_context(|| "Failed to render license from template")?;
                     std::fs::write(&path, rendered_license)
                         .with_context(|| format!("Failed to write license at {:?}", path))?;
                 }
                 Some("package.json") => {
                     let rendered_package_json = render_jinja_template(PACKAGE_JINJA, &ctx, &env)
-                        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+                        .with_context(|| "Failed to render package.json from template")?;
                     std::fs::write(&path, rendered_package_json)
                         .with_context(|| format!("Failed to write package.json at {:?}", path))?;
                 }
@@ -108,8 +108,8 @@ fn render_jinja_template(
     template_source: &str,
     ctx: &ProjectContext,
     env: &Environment,
-) -> anyhow::Result<String, minijinja::Error> {
-    env.render_str(
+) -> anyhow::Result<String> {
+    let rendered = env.render_str(
         template_source,
         context!(
             project_name => ctx.project_name,
@@ -117,11 +117,16 @@ fn render_jinja_template(
             email => ctx.email,
             year => ctx.year,
         ),
-    )
+    )?;
+
+    Ok(rendered)
 }
 
 /// Update the ProjectSettings.asset with the new company and product name
-fn modify_project_settings(ctx: &ProjectContext, unity_project: &UnityProject) {
+fn modify_project_settings(
+    ctx: &ProjectContext,
+    unity_project: &UnityProject,
+) -> anyhow::Result<()> {
     let settings_path = unity_project
         .project_settings_dir()
         .join("ProjectSettings.asset");
@@ -129,9 +134,10 @@ fn modify_project_settings(ctx: &ProjectContext, unity_project: &UnityProject) {
     // Unity ProjectSettings.asset is YAML, not JSON.
     // Use serde_yaml so we can safely update the structure.
     let mut settings: serde_yaml::Value = serde_yaml::from_str(
-        &std::fs::read_to_string(&settings_path).expect("Failed to read ProjectSettings.asset"),
+        &std::fs::read_to_string(&settings_path)
+            .with_context(|| "Failed to read ProjectSettings.asset")?,
     )
-    .expect("Failed to parse ProjectSettings.asset");
+    .with_context(|| "Failed to parse ProjectSettings.asset. Ensure the file is in yaml format.")?;
 
     if let Some(player_settings) = settings.get_mut("PlayerSettings") {
         if let Some(company_name) = player_settings.get_mut("companyName") {
@@ -144,12 +150,15 @@ fn modify_project_settings(ctx: &ProjectContext, unity_project: &UnityProject) {
 
     std::fs::write(
         settings_path,
-        serde_yaml::to_string(&settings).expect("Failed to serialize ProjectSettings.asset"),
+        serde_yaml::to_string(&settings)
+            .with_context(|| "Failed to serialize ProjectSettings to yaml.")?,
     )
-    .expect("Failed to write ProjectSettings.asset");
+    .with_context(|| "Failed to write to ProjectSettings.asset. Make sure the file exists and you have permission to modify it.")?;
 
     println!(
         "Updated ProjectSettings.asset with company name: '{}' and product name: '{}'.",
         ctx.company, ctx.project_name
     );
+
+    Ok(())
 }

@@ -86,12 +86,8 @@ fn import_util(
     fetch_directory(&alias_entry.repo, &alias_entry.path, &local_path)?;
 
     // create assembly definition for the utils folder if it doesn't exist
-    // TODO: limitation here is that we're not importing the assembly from the repo, we're just creating a new one so we might be missing dependencies
-    let assembly_name_file_name = format!(
-        "com.{}.{}.{}.asmdef",
-        ctx.company, ctx.project_name, "utils"
-    )
-    .to_lowercase();
+    let assembly_name_file_name =
+        format!("com.{}.{}.utils.asmdef", ctx.company, ctx.project_name).to_lowercase();
 
     let assembly_path = &local_path.join(&assembly_name_file_name);
     if !assembly_path.exists() {
