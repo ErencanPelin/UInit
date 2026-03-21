@@ -11,12 +11,24 @@ use crate::constants::{
 use crate::fs;
 use crate::unity_project::UnityProject;
 
-pub struct ProjectContext<'a> {
-    pub template_alias: &'a str,
-    pub project_name: &'a str,
-    pub company: &'a str,
-    pub email: &'a str,
+pub struct ProjectContext {
+    pub template_alias: String,
+    pub project_name: String,
+    pub company: String,
+    pub email: String,
     pub year: i32,
+}
+
+impl ProjectContext {
+    pub(crate) fn from_config(config: &UinitConfig) -> Self {
+        Self {
+            template_alias: config.project.template_alias.clone(),
+            project_name: config.project.project_name.clone(),
+            company: config.project.company.clone(),
+            email: config.project.email.clone(),
+            year: config.project.year,
+        }
+    }
 }
 
 pub fn init_project(ctx: &ProjectContext, unity_project: &UnityProject) -> anyhow::Result<()> {
@@ -59,7 +71,7 @@ fn create_from_template(ctx: &ProjectContext, unity_project: &UnityProject) -> a
 
         for &dir in *folders {
             // 1. Replace placeholder
-            let path_str = &dir.replace("{}", ctx.project_name);
+            let path_str = &dir.replace("{}", &ctx.project_name.to_string());
             let path = unity_project.root.join(&path_str);
 
             // 2. Create file or directory

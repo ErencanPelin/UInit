@@ -29,8 +29,12 @@ pub struct UinitConfig {
 impl UinitConfig {
     pub fn load(dir: &Path) -> anyhow::Result<Self> {
         let path = dir.join("uinit.toml");
-        let text = std::fs::read_to_string(&path)
-            .with_context(|| format!("Failed to read config file at {:?}", path))?;
+        let text = std::fs::read_to_string(&path).or_else(|e| {
+            if e.kind() == std::io::ErrorKind::NotFound {
+                anyhow::bail!("uinit.toml not found. Run 'uinit init' to create one.");
+            }
+            Err(e).with_context(|| format!("Failed to read {:?}", path))
+        })?;
 
         let config: Self = toml::from_str(&text)
             .context("Failed to parse uinit.toml. Please check your TOML syntax.")?;

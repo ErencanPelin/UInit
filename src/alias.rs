@@ -65,7 +65,6 @@ pub fn add_alias(
     unity_project: &UnityProject,
 ) -> anyhow::Result<()> {
     let mut config: UinitConfig = UinitConfig::load(&unity_project.root)?;
-
     let aliases = get_aliases(&config);
 
     println!("Adding alias {} to uinit.toml...", alias);
@@ -94,7 +93,6 @@ pub fn add_alias(
 
 pub fn remove_alias(alias: &String, unity_project: &UnityProject) -> anyhow::Result<()> {
     let mut config: UinitConfig = UinitConfig::load(&unity_project.root)?;
-
     let aliases = get_aliases(&config);
 
     println!("Removing alias {} from uinit.toml...", alias);

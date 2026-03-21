@@ -6,6 +6,7 @@ mod alias;
 mod cli;
 mod config;
 mod constants;
+mod doctor;
 mod feature;
 mod fs;
 mod new_project;
@@ -16,6 +17,7 @@ use cli::{Cli, Commands, FeatureActions, SteamActions};
 use crate::{
     cli::{AliasActions, ProjectActions},
     constants::{DEFAULT_COMPANY, DEFAULT_EMAIL},
+    doctor::handle_doctor,
     new_project::{ProjectContext, init_project},
     unity_project::UnityProject,
 };
@@ -35,10 +37,13 @@ fn main() -> anyhow::Result<()> {
                 email,
             } => {
                 let ctx = ProjectContext {
-                    template_alias: template.as_str(),
-                    project_name: name.as_str(),
-                    company: company.as_deref().unwrap_or_else(|| DEFAULT_COMPANY),
-                    email: email.as_deref().unwrap_or_else(|| DEFAULT_EMAIL),
+                    template_alias: template.to_string(),
+                    project_name: name.to_string(),
+                    // Clone the string if it exists, otherwise use the default
+                    company: company
+                        .clone()
+                        .unwrap_or_else(|| DEFAULT_COMPANY.to_string()),
+                    email: email.clone().unwrap_or_else(|| DEFAULT_EMAIL.to_string()),
                     year: chrono::Utc::now().year(),
                 };
                 init_project(&ctx, &unity_project)?;
@@ -69,6 +74,7 @@ fn main() -> anyhow::Result<()> {
             } => alias::add_alias(&alias, &repo, &path, &alias_type, &unity_project)?,
             AliasActions::Rm { alias } => alias::remove_alias(&alias, &unity_project)?,
         },
+        Commands::Doctor { fix } => handle_doctor(&unity_project, *fix)?,
     }
 
     Ok(())

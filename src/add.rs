@@ -14,14 +14,7 @@ use crate::{
 
 pub fn handle_add(alias: &str, unity_project: &UnityProject) -> anyhow::Result<()> {
     let config = UinitConfig::load(&unity_project.root)?;
-    let ctx = ProjectContext {
-        template_alias: config.project.template_alias.as_str(),
-        project_name: config.project.project_name.as_str(),
-        company: config.project.company.as_str(),
-        email: config.project.email.as_str(),
-        year: config.project.year,
-    };
-
+    let ctx = ProjectContext::from_config(&config);
     let aliases: HashMap<String, AliasEntry> = alias::get_aliases(&config);
 
     if let Some(alias_entry) = aliases.get(alias) {

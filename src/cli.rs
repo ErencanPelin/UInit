@@ -41,6 +41,11 @@ pub enum Commands {
         #[command(subcommand)]
         action: AliasActions,
     },
+    /// Run diagnostic on your Unity project setup
+    Doctor {
+        #[arg(short, long, default_value_t = false)]
+        fix: bool,
+    },
 }
 
 #[derive(Subcommand)]
