@@ -1,11 +1,20 @@
 use anyhow::Ok;
 
 use crate::project_context::ProjectContext;
+use crate::reporter::Reporter;
 use crate::{config::UinitConfig, constants::PROJECT_TEMPLATES, unity_project::UnityProject};
 
-pub fn handle_doctor(unity_project: &UnityProject, fix: bool) -> anyhow::Result<()> {
-    println!("🚀 Uinit: Running doctor with fix = {}...\n", fix);
+pub fn handle_doctor(
+    unity_project: &UnityProject,
+    reporter: &Reporter,
+    fix: bool,
+) -> anyhow::Result<()> {
+    println!(
+        "🚀 Uinit: Running doctor with auto-fix set to '{}' ...",
+        fix
+    );
 
+    reporter.info("Loading uinit.toml config file");
     let config = UinitConfig::load(&unity_project.root)?;
     let ctx = ProjectContext::from_config(&config);
 
@@ -14,24 +23,25 @@ pub fn handle_doctor(unity_project: &UnityProject, fix: bool) -> anyhow::Result<
     let results = [
         (
             "Project Settings",
-            validate_project_settings(&ctx, unity_project, fix)?,
+            validate_project_settings(&ctx, unity_project, reporter, fix)?,
         ),
         (
             "Project Structure",
-            validate_project_structure(&ctx, unity_project, fix)?,
+            validate_project_structure(&ctx, unity_project, reporter, fix)?,
         ),
     ];
 
     let mut total_issues = 0;
 
     // 3. Centralized Reporting
+    println!("\nSummary:\n");
     for (name, issues) in results {
         if issues.is_empty() {
-            println!("  ✅ {} is healthy", name);
+            reporter.success(&format!("{} is healthy.", name));
         } else {
             total_issues += issues.len();
             for issue in issues {
-                println!("{}", issue);
+                println!("{}.", issue);
             }
         }
     }
@@ -51,11 +61,12 @@ pub fn handle_doctor(unity_project: &UnityProject, fix: bool) -> anyhow::Result<
 fn validate_project_structure(
     ctx: &ProjectContext,
     unity_project: &UnityProject,
+    reporter: &Reporter,
     apply_fix: bool,
 ) -> anyhow::Result<Vec<String>> {
     let mut result = Vec::new();
 
-    // 1. Find the template
+    reporter.info("Checking current template from uinit.toml");
     let template = PROJECT_TEMPLATES
         .iter()
         .find(|(name, _, _)| *name == ctx.template_alias)
@@ -64,10 +75,12 @@ fn validate_project_structure(
     let (_, paths, _dependencies) = template;
 
     // 2. Trawl through paths
+    reporter.info("Checking to make sure all paths from template exist.");
     for path_template in *paths {
         // Replace {} with project name (e.g., "Assets/MyGame/Scripts/")
         let relative_path = path_template.replace("{}", &ctx.project_name);
         let full_path = unity_project.root.join(&relative_path);
+        reporter.info(&format!("Checking: {:?}.", full_path));
 
         if relative_path.ends_with('/') {
             // Check Directory
@@ -76,14 +89,16 @@ fn validate_project_structure(
                     std::fs::create_dir_all(&full_path)?;
                     result.push(format!("  ✅ Created missing directory: {}", relative_path));
                 } else {
+                    reporter.info(&format!("Creating: {:?}.", full_path));
                     result.push(format!("  ⚠️  Missing directory: {}", relative_path));
                 }
             }
         } else {
-            // Check File (README, etc.)
+            // Check Files (README, etc.)
             if !full_path.is_file() {
                 if apply_fix {
                     std::fs::write(&full_path, "")?; // Or render a template
+                    reporter.info(&format!("Creating: {:?}.", full_path));
                     result.push(format!("  ✅ Created missing file: {}", relative_path));
                 } else {
                     result.push(format!("  ⚠️  Missing file: {}", relative_path));
@@ -100,9 +115,13 @@ fn validate_project_structure(
 fn validate_project_settings(
     ctx: &ProjectContext,
     unity_project: &UnityProject,
+    reporter: &Reporter,
     apply_fix: bool,
 ) -> anyhow::Result<Vec<String>> {
     let mut result = Vec::new();
+    reporter.info("Checking if project settings match uinit.toml");
+
+    reporter.info("Reading ProjectSettings.asset.");
     let settings_path = unity_project
         .project_settings_dir()
         .join("ProjectSettings.asset");
@@ -122,6 +141,7 @@ fn validate_project_settings(
     let mut needs_save = false;
 
     for (key, expected, label) in configuration_map {
+        reporter.info(&format!("Checking if {} is {}.", key, expected));
         let actual = player.get(key).and_then(|v| v.as_str()).unwrap_or("");
 
         if actual != *expected {
@@ -130,10 +150,11 @@ fn validate_project_settings(
                     *val = serde_yaml::Value::String(expected.to_string());
                     needs_save = true;
                 }
+                reporter.info(&format!("Changed {} to {}.", key, expected));
                 result.push(format!("  ✅ Fixed {}: updated to '{}'", label, expected));
             } else {
                 result.push(format!(
-                    "  ⚠️ Mismatch in {}: expected '{}', but found '{}'",
+                    "  ⚠️  Mismatch in {}: expected '{}', but found '{}'",
                     label, expected, actual
                 ));
             }
@@ -141,6 +162,7 @@ fn validate_project_settings(
     }
 
     if apply_fix && needs_save {
+        reporter.info("Saving updated ProjectSettings.asset to disk.");
         let output = serde_yaml::to_string(&settings)?;
         std::fs::write(&settings_path, output)?;
     }

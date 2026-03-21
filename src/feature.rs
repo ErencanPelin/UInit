@@ -1,25 +1,35 @@
 use std::path::Path;
 
 use crate::{
-    config::UinitConfig, constants, fs, project_context::ProjectContext,
+    config::UinitConfig, constants, fs, project_context::ProjectContext, reporter::Reporter,
     unity_project::UnityProject,
 };
 use anyhow::{Context, bail};
 use minijinja::{Environment, context};
 
-pub fn init_feature(feature_name: &str, unity_project: &UnityProject) -> anyhow::Result<()> {
-    println!("🚀 Uinit: Adding {} feature module...\n", feature_name);
+pub fn init_feature(
+    feature_name: &str,
+    unity_project: &UnityProject,
+    reporter: &Reporter,
+) -> anyhow::Result<()> {
+    println!("🚀 Uinit: Adding {} feature module...", feature_name);
 
+    reporter.info("Getting project context from uinit.toml");
     let config = UinitConfig::load(&unity_project.root)?;
     let ctx: ProjectContext = ProjectContext::from_config(&config);
 
     // Create folders for feature domain inside /Assets/<ProjectName>/Scripts
+    reporter.info("Creating folders for feature.");
     let feature_folder = unity_project
         .root
         .join(format!("Assets/{}/Scripts", ctx.project_name))
         .join(feature_name);
 
     if feature_folder.exists() {
+        reporter.info(&format!(
+            "Skipped: directory already exists {:?}.",
+            feature_folder
+        ));
         bail!(format!("Feature {} is already defined.", feature_name))
     }
 
@@ -27,22 +37,27 @@ pub fn init_feature(feature_name: &str, unity_project: &UnityProject) -> anyhow:
     let editor_folder = feature_folder.join("Editor");
     let tests_folder = feature_folder.join("Tests");
 
+    reporter.info("Creating runtime folder.");
     if fs::create_dirs(&runtime_folder)? {
         println!("  📁 Created: {}", unity_project.rel_path(&runtime_folder));
     }
+    reporter.info("Creating editor folder.");
     if fs::create_dirs(&editor_folder)? {
         println!("  📁 Created: {}", unity_project.rel_path(&editor_folder));
     }
+    reporter.info("Creating tests folder.");
     if fs::create_dirs(&tests_folder)? {
         println!("  📁 Created: {}", unity_project.rel_path(&tests_folder));
     }
 
     // Create assembly definition files for the feature domain
+    reporter.info("Creating required assemblies.");
     let env = Environment::new();
     let runtime_assembly_name = create_assembly_definition(
         &runtime_folder,
         constants::ASSEMBLY_DEF_RUNTIME_JINJA,
         &ctx,
+        reporter,
         "runtime",
         feature_name,
         None,
@@ -52,6 +67,7 @@ pub fn init_feature(feature_name: &str, unity_project: &UnityProject) -> anyhow:
         &editor_folder,
         constants::ASSEMBLY_DEF_EDITOR_JINJA,
         &ctx,
+        reporter,
         "editor",
         feature_name,
         Some(&[runtime_assembly_name.clone()]),
@@ -61,6 +77,7 @@ pub fn init_feature(feature_name: &str, unity_project: &UnityProject) -> anyhow:
         &tests_folder,
         constants::ASSEMBLY_DEF_TESTS_JINJA,
         &ctx,
+        reporter,
         "tests",
         feature_name,
         Some(&[runtime_assembly_name.clone()]),
@@ -77,6 +94,7 @@ pub fn create_assembly_definition(
     dir_path: &Path,
     template_source: &str,
     ctx: &ProjectContext,
+    reporter: &Reporter,
     assembly_type: &str,
     feature_name: &str,
     dependencies: Option<&[String]>,
@@ -91,6 +109,7 @@ pub fn create_assembly_definition(
     let file_name = format!("{}.asmdef", assembly_name);
     let full_path = dir_path.join(&file_name);
 
+    reporter.info("Rendering assembly file from jinja2 template.");
     let rendered_content = render_jinja_template(
         template_source,
         feature_name,
@@ -100,10 +119,14 @@ pub fn create_assembly_definition(
     )
     .with_context(|| format!("Failed to render {} asmdef", assembly_type))?;
 
+    reporter.info("Creating assembly file on disk.");
     if fs::create_file(&full_path)? {
         println!("  ✅ Created assembly {}", file_name);
+    } else {
+        reporter.info("Assembly file already exists on disk.");
     }
 
+    reporter.info("Writing to assembly file.");
     std::fs::write(&full_path, rendered_content)
         .with_context(|| format!("Failed to write asmdef to {:?}", full_path))?;
 

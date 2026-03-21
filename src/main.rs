@@ -11,11 +11,13 @@ mod feature;
 mod fs;
 mod new_project;
 mod project_context;
+mod reporter;
 mod steam;
 mod unity_project;
 use cli::{Cli, Commands, FeatureActions, SteamActions};
 
 use crate::project_context::ProjectContext;
+use crate::reporter::Reporter;
 use crate::{
     cli::{AliasActions, ProjectActions},
     constants::{DEFAULT_COMPANY, DEFAULT_EMAIL},
@@ -26,6 +28,7 @@ use crate::{
 
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
+    let reporter = Reporter::new(cli.verbose);
 
     let unity_project = UnityProject::detect()?;
 
@@ -47,22 +50,22 @@ fn main() -> anyhow::Result<()> {
                     email: email.clone().unwrap_or_else(|| DEFAULT_EMAIL.to_string()),
                     year: chrono::Utc::now().year(),
                 };
-                init_project(&ctx, &unity_project)?;
+                init_project(&ctx, &unity_project, &reporter)?;
             }
         },
         Commands::Steam { action } => match action {
             SteamActions::Init { app_id } => {
                 let ctx = steam::SteamContext { app_id: *app_id };
-                steam::init_steam(&ctx, &unity_project)?;
+                steam::init_steam(&ctx, &unity_project, &reporter)?;
             }
         },
         Commands::Feature { action } => match action {
             FeatureActions::Create { name } => {
-                feature::init_feature(name, &unity_project)?;
+                feature::init_feature(name, &unity_project, &reporter)?;
             }
         },
         Commands::Add { alias } => {
-            add::handle_add(alias, &unity_project)?;
+            add::handle_add(alias, &unity_project, &reporter)?;
         }
         Commands::Alias { action } => match action {
             AliasActions::List {} => alias::list_aliases(&unity_project)?,
@@ -74,7 +77,7 @@ fn main() -> anyhow::Result<()> {
             } => alias::add_alias(&alias, &repo, &path, &alias_type, &unity_project)?,
             AliasActions::Rm { alias } => alias::remove_alias(&alias, &unity_project)?,
         },
-        Commands::Doctor { fix } => handle_doctor(&unity_project, *fix)?,
+        Commands::Doctor { fix } => handle_doctor(&unity_project, &reporter, *fix)?,
     }
 
     Ok(())

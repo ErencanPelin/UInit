@@ -3,6 +3,7 @@ use minijinja::Environment;
 use std::{collections::HashMap, path::Path, process::Command};
 
 use crate::project_context::ProjectContext;
+use crate::reporter::{self, Reporter};
 use crate::{
     alias,
     config::{AliasEntry, UinitConfig},
@@ -12,7 +13,11 @@ use crate::{
     unity_project::UnityProject,
 };
 
-pub fn handle_add(alias: &str, unity_project: &UnityProject) -> anyhow::Result<()> {
+pub fn handle_add(
+    alias: &str,
+    unity_project: &UnityProject,
+    reporter: &Reporter,
+) -> anyhow::Result<()> {
     let config = UinitConfig::load(&unity_project.root)?;
     let ctx = ProjectContext::from_config(&config);
     let aliases: HashMap<String, AliasEntry> = alias::get_aliases(&config);
@@ -24,13 +29,16 @@ pub fn handle_add(alias: &str, unity_project: &UnityProject) -> anyhow::Result<(
         );
 
         match alias_entry.alias_type.to_lowercase().as_str() {
-            "util" => import_util(&ctx, &unity_project, &alias_entry)?,
-            "module" => import_module(&ctx, &unity_project, &alias_entry)?,
-            "tool" => import_tool(&unity_project, &alias_entry)?,
+            "util" => import_util(&ctx, &unity_project, &reporter, &alias_entry)?,
+            "module" => import_module(&ctx, &unity_project, &reporter, &alias_entry)?,
+            "tool" => import_tool(&unity_project, &reporter, &alias_entry)?,
             _ => {}
         }
 
-        println!("Successfully added {} '{}'", alias_entry.alias_type, alias);
+        reporter.success(&format!(
+            "Successfully added {} '{}'",
+            alias_entry.alias_type, alias
+        ));
     } else {
         anyhow::bail!(
             "Alias '{}' not found in configuration. Check your 'uinit.toml' or use 'uinit alias list' to see available aliases.",
@@ -41,10 +49,14 @@ pub fn handle_add(alias: &str, unity_project: &UnityProject) -> anyhow::Result<(
     Ok(())
 }
 
-fn import_tool(unity_project: &UnityProject, alias_entry: &AliasEntry) -> anyhow::Result<()> {
+fn import_tool(
+    unity_project: &UnityProject,
+    reporter: &Reporter,
+    alias_entry: &AliasEntry,
+) -> anyhow::Result<()> {
     let local_path = &unity_project.root.join("Tools");
 
-    fetch_file(&alias_entry.repo, &alias_entry.path, &local_path)?;
+    fetch_file(&reporter, &alias_entry.repo, &alias_entry.path, &local_path)?;
 
     Ok(())
 }
@@ -52,6 +64,7 @@ fn import_tool(unity_project: &UnityProject, alias_entry: &AliasEntry) -> anyhow
 fn import_module(
     ctx: &ProjectContext,
     unity_project: &UnityProject,
+    reporter: &Reporter,
     alias_entry: &AliasEntry,
 ) -> anyhow::Result<()> {
     // fetch and move into the project
@@ -60,7 +73,7 @@ fn import_module(
         .join(&ctx.project_name)
         .join("Scripts");
 
-    fetch_directory(&alias_entry.repo, &alias_entry.path, &local_path)?;
+    fetch_directory(&reporter, &alias_entry.repo, &alias_entry.path, &local_path)?;
 
     Ok(())
 }
@@ -68,6 +81,7 @@ fn import_module(
 fn import_util(
     ctx: &ProjectContext,
     unity_project: &UnityProject,
+    reporter: &Reporter,
     alias_entry: &AliasEntry,
 ) -> anyhow::Result<()> {
     // fetch and move into the project
@@ -76,7 +90,7 @@ fn import_util(
         .join(&ctx.project_name)
         .join("Scripts/Utils");
 
-    fetch_directory(&alias_entry.repo, &alias_entry.path, &local_path)?;
+    fetch_directory(&reporter, &alias_entry.repo, &alias_entry.path, &local_path)?;
 
     // create assembly definition for the utils folder if it doesn't exist
     let assembly_name_file_name =
@@ -88,6 +102,7 @@ fn import_util(
             &local_path,
             constants::ASSEMBLY_DEF_RUNTIME_JINJA,
             &ctx,
+            reporter,
             "runtime",
             "utils",
             None,
@@ -99,6 +114,7 @@ fn import_util(
 }
 
 fn fetch_directory(
+    reporter: &Reporter,
     repo: &str,
     remote_folder_path: &str,
     local_dest_path: &Path,
@@ -107,21 +123,25 @@ fn fetch_directory(
 
     // FIXME: we should always clean up the temp dir if a failure occurs anywhere in this function
     // cleanup old temp dir if it still exists (e.g. a mid failed process)
+    reporter.info("Checking if temporary directory already exists.");
     if Path::new(temp_dir).exists() {
         std::fs::remove_dir_all(temp_dir)?;
     }
 
     // Initialize and add remote to a temp directory
     // We pull the repo into the temp directory then move files to the correct destination in the project
+    reporter.info("Initialising new temp git repo.");
     Command::new("git").args(["init", temp_dir]).output()?;
     let cmd_dir = Path::new(temp_dir);
 
+    reporter.info("Writing git config.");
     Command::new("git")
         .current_dir(cmd_dir)
         .args(["remote", "add", "origin", repo])
         .output()?;
 
     // Enable sparse-checkout
+    reporter.info("Enabling sparse checkout.");
     Command::new("git")
         .current_dir(cmd_dir)
         .args(["sparse-checkout", "init", "--cone"])
@@ -129,12 +149,14 @@ fn fetch_directory(
 
     // Set the specific path to fetch so that we don't pull the whole repo. We need sparse-checkout for this
     // Note: remote_folder_path must match the repo root structure exactly
+    reporter.info("Setting sparse-checkout remote path.");
     Command::new("git")
         .current_dir(cmd_dir)
         .args(["sparse-checkout", "set", remote_folder_path])
         .output()?;
 
     // Pull using HEAD to auto-detect main/master
+    reporter.info("Downloading files from from git remote...");
     let pull_status = Command::new("git")
         .current_dir(cmd_dir)
         .args(["pull", "--depth", "1", "origin", "HEAD"])
@@ -153,12 +175,19 @@ fn fetch_directory(
 
         let final_local_path = local_dest_path.join(folder_name);
 
+        reporter.info("Copying pulled files intto the project.");
         fs::copy_dir_recursive(&downloaded_path, &final_local_path)?;
     } else {
         // Debug: List files to see what Git actually pulled
+        reporter.info("Oops, looks like git didn't pull everything correctly.");
         let entries = std::fs::read_dir(cmd_dir)?
             .map(|res| res.map(|e| e.path()))
             .collect::<Result<Vec<_>, std::io::Error>>()?;
+
+        entries.iter().for_each(|f| {
+            reporter.info(&format!("Pulled {:?}.", f));
+        });
+
         anyhow::bail!(
             "Directory '{}' not found in downloaded content. Found: {:?}",
             remote_folder_path,
@@ -167,17 +196,25 @@ fn fetch_directory(
     }
 
     // cleanup the temp directory
+    reporter.info("Cleanup: Deleting temporary git repo.");
     std::fs::remove_dir_all(temp_dir)?;
     Ok(())
 }
 
-fn fetch_file(repo: &str, remote_file_path: &str, local_dest_dir: &Path) -> anyhow::Result<()> {
+fn fetch_file(
+    reporter: &Reporter,
+    repo: &str,
+    remote_file_path: &str,
+    local_dest_dir: &Path,
+) -> anyhow::Result<()> {
     let temp_dir = ".uinit_temp";
 
+    reporter.info("Checking if temporary directory already exists.");
     if Path::new(temp_dir).exists() {
         std::fs::remove_dir_all(temp_dir).context("Failed to clean up old temp directory")?;
     }
 
+    reporter.info("Initialising new temp git repo.");
     Command::new("git")
         .args(["init", temp_dir])
         .output()
@@ -195,11 +232,14 @@ fn fetch_file(repo: &str, remote_file_path: &str, local_dest_dir: &Path) -> anyh
     run_git(&["remote", "add", "origin", repo])?;
     run_git(&["config", "core.sparseCheckout", "true"])?;
 
+    reporter.info("Initialising sparse-checkout new temp git repo.");
     let sparse_info = cmd_dir.join(".git/info/sparse-checkout");
     std::fs::write(sparse_info, format!("{}\n", remote_file_path))?;
 
+    reporter.info("Downloading files from git remote...");
     run_git(&["pull", "--depth", "1", "origin", "HEAD"])?;
 
+    reporter.info("Making sure file exists locally.");
     let file_name = Path::new(remote_file_path)
         .file_name()
         .ok_or_else(|| anyhow::anyhow!("Invalid remote file path: {}", remote_file_path))?;
@@ -207,18 +247,22 @@ fn fetch_file(repo: &str, remote_file_path: &str, local_dest_dir: &Path) -> anyh
     let downloaded_file = cmd_dir.join(remote_file_path);
     let target_path = local_dest_dir.join(file_name);
 
+    reporter.info("Making sure file exists locally.");
     if downloaded_file.is_file() {
+        reporter.info("Creating target directory inside project.");
         std::fs::create_dir_all(local_dest_dir)
             .with_context(|| format!("Failed to create directory: {}", local_dest_dir.display()))?;
 
+        reporter.info("Cpying downloading file into target directory inside project.");
         std::fs::copy(&downloaded_file, &target_path)
             .with_context(|| format!("Failed to copy file to {}", target_path.display()))?;
 
-        println!("Successfully imported: {}", target_path.display());
+        reporter.success(&format!("Successfully imported: {}", target_path.display()));
     } else {
         anyhow::bail!("File not found in repository at path: {}", remote_file_path);
     }
 
+    reporter.info("Cleanup: Deleting temporary git repo.");
     let _ = std::fs::remove_dir_all(temp_dir);
     Ok(())
 }

@@ -8,6 +8,10 @@ use serde::{Deserialize, Serialize};
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
+
+    /// Run in verbose mode
+    #[arg(short, long, global = true, default_value_t = false)]
+    pub verbose: bool,
 }
 
 #[derive(Subcommand)]
