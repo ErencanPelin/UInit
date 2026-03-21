@@ -1,41 +1,51 @@
 // These values are used as defaults for project creation if their values are not provided via CLI arguments.
-pub const COMPANY: &str = "ErencanPelin";
-pub const EMAIL: &str = "erenp.business@gmail.com";
+pub const DEFAULT_COMPANY: &str = "DefaultCompany";
+pub const DEFAULT_EMAIL: &str = "";
 
 /*
  * Template paths for project creation. The {} in the paths will be replaced with the project name.
  * End the line with a / to create a directory, otherwise a file will be created.
 */
-pub const GAME_PROJECT_TEMPLATE: &[&str] = &[
-    "Assets/{}/Animations/",
-    "Assets/{}/Audio/",
-    "Assets/{}/Materials/",
-    "Assets/{}/Meshes/",
-    "Assets/{}/Prefabs/",
-    "Assets/{}/Scenes/",
-    "Assets/{}/Scripts/",
-    "Assets/{}/Scripts/Core/",
-    "Assets/{}/Scripts/Common/",
-    "Assets/{}/Shaders/",
-    "Assets/{}/Textures/",
-    "README.md",
-];
-
-pub const PACKAGE_PROJECT_TEMPLATE: &[&str] = &[
-    "Assets/{}/Animations/",
-    "Assets/{}/Materials/",
-    "Assets/{}/Meshes/",
-    "Assets/{}/Prefabs/",
-    "Assets/{}/Scenes/",
-    "Assets/{}/Scripts/",
-    "Assets/{}/Scripts/Core/",
-    "Assets/{}/Scripts/Common/",
-    "Assets/{}/Samples/",
-    "Assets/{}/Textures/",
-    "Assets/{}/README.md",
-    "Assets/{}/CHANGELOG.md",
-    "Assets/{}/LICENSE",
-    "Assets/{}/package.json",
+pub const PROJECT_TEMPLATES: &[(&str, &[&str], &[(&str, &str)])] = &[
+    (
+        "game", // alias to create the template
+        &[
+            // folder structure
+            "Assets/{}/Animations/",
+            "Assets/{}/Audio/",
+            "Assets/{}/Materials/",
+            "Assets/{}/Meshes/",
+            "Assets/{}/Prefabs/",
+            "Assets/{}/Scenes/",
+            "Assets/{}/Scripts/",
+            "Assets/{}/Scripts/Core/",
+            "Assets/{}/Scripts/Common/",
+            "Assets/{}/Shaders/",
+            "Assets/{}/Textures/",
+            "README.md",
+        ],
+        &[NUGET_MOQ_PACKAGE], // dependencies
+    ),
+    (
+        "package",
+        &[
+            "Assets/{}/Animations/",
+            "Assets/{}/Materials/",
+            "Assets/{}/Meshes/",
+            "Assets/{}/Prefabs/",
+            "Assets/{}/Scenes/",
+            "Assets/{}/Scripts/",
+            "Assets/{}/Scripts/Core/",
+            "Assets/{}/Scripts/Common/",
+            "Assets/{}/Samples/",
+            "Assets/{}/Textures/",
+            "Assets/{}/README.md",
+            "Assets/{}/CHANGELOG.md",
+            "Assets/{}/LICENSE",
+            "Assets/{}/package.json",
+        ],
+        &[NUGET_MOQ_PACKAGE], // dependencies
+    ),
 ];
 
 // Template files contents for file creation and jinja rendering.

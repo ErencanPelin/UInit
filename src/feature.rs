@@ -10,7 +10,7 @@ pub fn init_feature(feature_name: &str, unity_project: &UnityProject) -> anyhow:
     // Reconstruct the project context from existing metadata so feature generation can run later.
     let config = UinitConfig::load(&unity_project.root)?;
     let ctx = ProjectContext {
-        template: config.project.template,
+        template_alias: config.project.template_alias.as_str(),
         project_name: config.project.project_name.as_str(),
         company: config.project.company.as_str(),
         email: config.project.email.as_str(),

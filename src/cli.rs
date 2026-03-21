@@ -81,7 +81,7 @@ pub enum ProjectActions {
 
         /// Project type
         #[arg(short, long, value_enum)]
-        template: ProjectType,
+        template: String,
 
         /// Project owner company name (used for namespaces and package names). Use your own name if you're not a company
         #[arg(short, long)]
@@ -119,12 +119,6 @@ pub enum FeatureActions {
         /// Name of the feature (e.g. inventory, dialogue, etc.)
         name: String,
     },
-}
-
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Serialize, Deserialize, Debug)]
-pub enum ProjectType {
-    Game,
-    Package,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]

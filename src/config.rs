@@ -1,4 +1,3 @@
-use crate::cli::ProjectType;
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::Path};
@@ -14,7 +13,7 @@ pub struct AliasEntry {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProjectMetadata {
     pub project_name: String,
-    pub template: ProjectType,
+    pub template_alias: String,
     pub company: String,
     pub email: String,
     pub year: i32,

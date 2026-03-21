@@ -5,42 +5,35 @@ use minijinja::{Environment, context};
 
 use crate::config::{ProjectMetadata, UinitConfig};
 use crate::constants::{
-    CHANGELOG_TEMPLATE, GAME_PROJECT_TEMPLATE, GITIGNORE_TEMPLATE, LICENSE_JINJA,
-    NUGET_MOQ_PACKAGE, PACKAGE_JINJA, PACKAGE_PROJECT_TEMPLATE,
+    CHANGELOG_TEMPLATE, GITIGNORE_TEMPLATE, LICENSE_JINJA, PACKAGE_JINJA, PROJECT_TEMPLATES,
 };
 use crate::fs;
-use crate::{cli::ProjectType, unity_project::UnityProject};
+use crate::unity_project::UnityProject;
 
 pub struct ProjectContext<'a> {
-    pub template: ProjectType,
+    pub template_alias: &'a str,
     pub project_name: &'a str,
     pub company: &'a str,
     pub email: &'a str,
     pub year: i32,
 }
 
-pub fn new_project(ctx: &ProjectContext, unity_project: &UnityProject) -> anyhow::Result<()> {
+pub fn init_project(ctx: &ProjectContext, unity_project: &UnityProject) -> anyhow::Result<()> {
     // Create template files and folders
-    match ctx.template {
-        ProjectType::Game => create_from_template(&ctx, &unity_project, &GAME_PROJECT_TEMPLATE),
-        ProjectType::Package => {
-            create_from_template(&ctx, &unity_project, &PACKAGE_PROJECT_TEMPLATE)
-        }
-    }
-    .with_context(|| format!("Failed to create from project template {:?}", ctx.template))?;
+    create_from_template(&ctx, &unity_project).with_context(|| {
+        format!(
+            "Failed to create from project template {:?}",
+            ctx.template_alias
+        )
+    })?;
 
     modify_project_settings(&ctx, &unity_project)?;
-
-    // Add common packages that are recommended to use for most projects
-    unity_project
-        .add_package(NUGET_MOQ_PACKAGE.0, NUGET_MOQ_PACKAGE.1)
-        .context("Failed to add Moq package to manifest.json")?;
 
     // Persist metadata so subsequent runs (e.g. `uinit feature`) can reconstruct the context
     let config = UinitConfig {
         project: ProjectMetadata {
             project_name: ctx.project_name.to_string(),
-            template: ctx.template,
+            template_alias: ctx.template_alias.to_string(),
             company: ctx.company.to_string(),
             email: ctx.email.to_string(),
             year: ctx.year,
@@ -52,55 +45,71 @@ pub fn new_project(ctx: &ProjectContext, unity_project: &UnityProject) -> anyhow
     Ok(())
 }
 
-fn create_from_template(
-    ctx: &ProjectContext,
-    unity_project: &UnityProject,
-    template: &[&str],
-) -> anyhow::Result<()> {
+fn create_from_template(ctx: &ProjectContext, unity_project: &UnityProject) -> anyhow::Result<()> {
     // new environemtn for each project creation to avoid caching issues with different contexts
     let env = Environment::new();
 
-    for entry in template {
-        // 1. Replace placeholder
-        let path_str = entry.replace("{}", ctx.project_name);
-        let path = unity_project.root.join(&path_str);
+    let template = PROJECT_TEMPLATES
+        .iter()
+        .find(|(name, _, _)| *name == ctx.template_alias);
 
-        // 2. Create file or directory
-        if entry.ends_with("/") {
-            fs::create_directory(&path)?;
-            println!("Created directory: {}", path.display());
-        } else {
-            fs::create_file(&path)?;
-            println!("Created file: {}", path.display());
+    if let Some((name, folders, deps)) = template {
+        println!("Selected template: {}", name);
 
-            // if we reach this point it means the file was created successfully, so we can write content if needed
-            // this stops us from overwriting existing files
-            match std::path::Path::new(&path_str)
-                .file_name()
-                .and_then(|n| n.to_str())
-            {
-                Some("CHANGELOG.md") => std::fs::write(&path, CHANGELOG_TEMPLATE)
-                    .with_context(|| format!("Failed to write changelog.md at {:?}", path))?,
+        for &dir in *folders {
+            // 1. Replace placeholder
+            let path_str = &dir.replace("{}", ctx.project_name);
+            let path = unity_project.root.join(&path_str);
 
-                Some(".gitignore") => std::fs::write(&path, GITIGNORE_TEMPLATE)
-                    .with_context(|| format!("Failed to write .gitignore at {:?}", path))?,
+            // 2. Create file or directory
+            if dir.ends_with("/") {
+                fs::create_directory(&path)?;
+                println!("Created directory: {}", path.display());
+            } else {
+                fs::create_file(&path)?;
+                println!("Created file: {}", path.display());
 
-                Some("LICENSE") => {
-                    let rendered_license = render_jinja_template(LICENSE_JINJA, &ctx, &env)
-                        .with_context(|| "Failed to render license from template")?;
-                    std::fs::write(&path, rendered_license)
-                        .with_context(|| format!("Failed to write license at {:?}", path))?;
+                // if we reach this point it means the file was created successfully, so we can write content if needed
+                // this stops us from overwriting existing files
+                match std::path::Path::new(&path_str)
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                {
+                    Some("CHANGELOG.md") => std::fs::write(&path, CHANGELOG_TEMPLATE)
+                        .with_context(|| format!("Failed to write changelog.md at {:?}", path))?,
+
+                    Some(".gitignore") => std::fs::write(&path, GITIGNORE_TEMPLATE)
+                        .with_context(|| format!("Failed to write .gitignore at {:?}", path))?,
+
+                    Some("LICENSE") => {
+                        let rendered_license = render_jinja_template(LICENSE_JINJA, &ctx, &env)
+                            .with_context(|| "Failed to render license from template")?;
+                        std::fs::write(&path, rendered_license)
+                            .with_context(|| format!("Failed to write license at {:?}", path))?;
+                    }
+                    Some("package.json") => {
+                        let rendered_package_json =
+                            render_jinja_template(PACKAGE_JINJA, &ctx, &env)
+                                .with_context(|| "Failed to render package.json from template")?;
+                        std::fs::write(&path, rendered_package_json).with_context(|| {
+                            format!("Failed to write package.json at {:?}", path)
+                        })?;
+                    }
+                    _ => {}
                 }
-                Some("package.json") => {
-                    let rendered_package_json = render_jinja_template(PACKAGE_JINJA, &ctx, &env)
-                        .with_context(|| "Failed to render package.json from template")?;
-                    std::fs::write(&path, rendered_package_json)
-                        .with_context(|| format!("Failed to write package.json at {:?}", path))?;
-                }
-                _ => {}
             }
         }
+
+        // add template dependencies
+        for &dependency in *deps {
+            unity_project
+                .add_package(dependency.0, dependency.1)
+                .context("Failed to add Moq package to manifest.json")?;
+        }
+    } else {
+        anyhow::bail!("Template '{}' not found", ctx.template_alias);
     }
+
     Ok(())
 }
 

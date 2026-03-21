@@ -15,8 +15,8 @@ use cli::{Cli, Commands, FeatureActions, SteamActions};
 
 use crate::{
     cli::{AliasActions, ProjectActions},
-    constants::{COMPANY, EMAIL},
-    new_project::{ProjectContext, new_project},
+    constants::{DEFAULT_COMPANY, DEFAULT_EMAIL},
+    new_project::{ProjectContext, init_project},
     unity_project::UnityProject,
 };
 
@@ -35,13 +35,13 @@ fn main() -> anyhow::Result<()> {
                 email,
             } => {
                 let ctx = ProjectContext {
-                    template: template.clone(),
+                    template_alias: template.as_str(),
                     project_name: name.as_str(),
-                    company: company.as_deref().unwrap_or_else(|| COMPANY),
-                    email: email.as_deref().unwrap_or_else(|| EMAIL),
+                    company: company.as_deref().unwrap_or_else(|| DEFAULT_COMPANY),
+                    email: email.as_deref().unwrap_or_else(|| DEFAULT_EMAIL),
                     year: chrono::Utc::now().year(),
                 };
-                new_project(&ctx, &unity_project)?;
+                init_project(&ctx, &unity_project)?;
             }
         },
         Commands::Steam { action } => match action {
