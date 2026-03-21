@@ -6,6 +6,7 @@ use minijinja::{Environment, context};
 use crate::config::{ProjectMetadata, UinitConfig};
 use crate::constants::{
     CHANGELOG_TEMPLATE, GITIGNORE_TEMPLATE, LICENSE_JINJA, PACKAGE_JINJA, PROJECT_TEMPLATES,
+    README_JINJA,
 };
 use crate::fs;
 use crate::unity_project::UnityProject;
@@ -94,6 +95,12 @@ fn create_from_template(ctx: &ProjectContext, unity_project: &UnityProject) -> a
                         std::fs::write(&path, rendered_package_json).with_context(|| {
                             format!("Failed to write package.json at {:?}", path)
                         })?;
+                    }
+                    Some("README.md") => {
+                        let rendered_readme = render_jinja_template(README_JINJA, &ctx, &env)
+                            .with_context(|| "Failed to render README.md from template")?;
+                        std::fs::write(&path, rendered_readme)
+                            .with_context(|| format!("Failed to write README.md at {:?}", path))?;
                     }
                     _ => {}
                 }

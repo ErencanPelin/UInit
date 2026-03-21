@@ -15,7 +15,7 @@ The aim of this project is to initialise Unity projects with the core folder str
 ## Developing
 See [DEVELOPING.md](/DEVELOPING.md)
 
-## Geting Started
+## Getting Started
 Run `uinit --help` in your terminal to get started.
 
 ### To setup UInit in your Unity project

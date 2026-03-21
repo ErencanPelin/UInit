@@ -22,7 +22,6 @@ pub const PROJECT_TEMPLATES: &[(&str, &[&str], &[(&str, &str)])] = &[
             "Assets/{}/Scripts/Common/",
             "Assets/{}/Shaders/",
             "Assets/{}/Textures/",
-            "README.md",
         ],
         &[NUGET_MOQ_PACKAGE], // dependencies
     ),
@@ -50,9 +49,10 @@ pub const PROJECT_TEMPLATES: &[(&str, &[&str], &[(&str, &str)])] = &[
 
 // Template files contents for file creation and jinja rendering.
 pub const PACKAGE_JINJA: &str = include_str!("./templates/package.json.jinja2");
-pub const LICENSE_JINJA: &str = include_str!("./templates/LICENSE.md.jinja2");
+pub const LICENSE_JINJA: &str = include_str!("./templates/LICENSE.jinja2");
 pub const GITIGNORE_TEMPLATE: &str = include_str!("./templates/.gitignore");
 pub const CHANGELOG_TEMPLATE: &str = include_str!("./templates/CHANGELOG.md");
+pub const README_JINJA: &str = include_str!("./templates/README.md.jinja2");
 pub const ASSEMBLY_DEF_RUNTIME_JINJA: &str =
     include_str!("./templates/assembly_def_runtime.asmdef.jinja2");
 pub const ASSEMBLY_DEF_TESTS_JINJA: &str =
