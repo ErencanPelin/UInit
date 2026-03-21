@@ -1,4 +1,8 @@
+use std::path::Path;
+
 use anyhow::Context;
+
+use crate::fs;
 
 pub struct UnityProject {
     pub root: std::path::PathBuf,
@@ -27,39 +31,53 @@ impl UnityProject {
         self.root.join("ProjectSettings")
     }
 
-    pub fn add_package(&self, package_name: &str, version: &str) -> anyhow::Result<()> {
-        let manifest_path = self.packages_dir().join("manifest.json");
-        let mut manifest: serde_json::Value = serde_json::from_str(
-            &std::fs::read_to_string(&manifest_path)
-                .with_context(|| "Failed to read manifest.json")?,
-        )
-        .with_context(|| "Failed to parse manifest.json")?;
+    pub fn rel_path(&self, path: &Path) -> String {
+        path.strip_prefix(&self.root)
+            .map(|p| p.to_string_lossy().into_owned())
+            .unwrap_or_else(|_| path.to_string_lossy().into_owned())
+    }
 
-        // Add package to dependencies if not already present
-        let dependencies = manifest
+    pub fn add_package(&self, package_name: &str, version: &str) -> anyhow::Result<()> {
+        let path = self.packages_dir().join("manifest.json");
+
+        let mut manifest: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(&path)?)
+                .with_context(|| "Failed to parse manifest.json")?;
+
+        let deps = manifest
             .get_mut("dependencies")
             .and_then(|d| d.as_object_mut())
-            .with_context(|| "manifest.json is missing 'dependencies' object")?;
+            .ok_or_else(|| anyhow::anyhow!("manifest.json missing 'dependencies' object"))?;
 
-        if !dependencies.contains_key(package_name) {
-            dependencies.insert(
-                package_name.to_string(),
-                serde_json::Value::String(version.to_string()),
-            );
-            std::fs::write(
-                manifest_path,
-                serde_json::to_string_pretty(&manifest)
-                    .with_context(|| "Failed to serialize manifest.json")?,
-            )
-            .with_context(|| "Failed to write manifest.json")?;
-            println!("Added {} to manifest.json dependencies.", package_name);
-        } else {
+        // Check if we actually need to change anything
+        let existing_version = deps.get(package_name).and_then(|v| v.as_str());
+
+        if existing_version == Some(version) {
             println!(
-                "{} is already present in manifest.json dependencies.",
-                package_name
+                "  ✅ Package {} is already at version {}.",
+                package_name, version
             );
+            return Ok(());
         }
 
+        // Update or Insert
+        let existing = deps.insert(package_name.to_string(), version.into());
+
+        // Use your fs module for the write
+        let output = serde_json::to_string_pretty(&manifest)?;
+        fs::write_to_file(&output, &path)?;
+
+        if existing.is_none() {
+            println!(
+                "  ✅ Added package {} {} in manifest.json",
+                package_name, version
+            );
+        } else {
+            println!(
+                "  ✅ Updated package {} to {} in manifest.json",
+                package_name, version
+            );
+        }
         Ok(())
     }
 }

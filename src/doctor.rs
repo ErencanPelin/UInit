@@ -1,8 +1,11 @@
 use anyhow::Ok;
 
-use crate::{config::UinitConfig, new_project::ProjectContext, unity_project::UnityProject};
+use crate::project_context::ProjectContext;
+use crate::{config::UinitConfig, constants::PROJECT_TEMPLATES, unity_project::UnityProject};
 
 pub fn handle_doctor(unity_project: &UnityProject, fix: bool) -> anyhow::Result<()> {
+    println!("🚀 Uinit: Running doctor with fix = {}...\n", fix);
+
     let config = UinitConfig::load(&unity_project.root)?;
     let ctx = ProjectContext::from_config(&config);
 
@@ -15,7 +18,7 @@ pub fn handle_doctor(unity_project: &UnityProject, fix: bool) -> anyhow::Result<
         ),
         (
             "Project Structure",
-            validate_project_structure(&ctx, unity_project)?,
+            validate_project_structure(&ctx, unity_project, fix)?,
         ),
     ];
 
@@ -24,7 +27,7 @@ pub fn handle_doctor(unity_project: &UnityProject, fix: bool) -> anyhow::Result<
     // 3. Centralized Reporting
     for (name, issues) in results {
         if issues.is_empty() {
-            println!("✅ {} is healthy", name);
+            println!("  ✅ {} is healthy", name);
         } else {
             total_issues += issues.len();
             for issue in issues {
@@ -48,11 +51,50 @@ pub fn handle_doctor(unity_project: &UnityProject, fix: bool) -> anyhow::Result<
 fn validate_project_structure(
     ctx: &ProjectContext,
     unity_project: &UnityProject,
+    apply_fix: bool,
 ) -> anyhow::Result<Vec<String>> {
-    let mut issues = Vec::new();
-    println!("Validating project structure...");
+    let mut result = Vec::new();
 
-    Ok(issues)
+    // 1. Find the template
+    let template = PROJECT_TEMPLATES
+        .iter()
+        .find(|(name, _, _)| *name == ctx.template_alias)
+        .ok_or_else(|| anyhow::anyhow!("Unknown template alias: {}", ctx.template_alias))?;
+
+    let (_, paths, _dependencies) = template;
+
+    // 2. Trawl through paths
+    for path_template in *paths {
+        // Replace {} with project name (e.g., "Assets/MyGame/Scripts/")
+        let relative_path = path_template.replace("{}", &ctx.project_name);
+        let full_path = unity_project.root.join(&relative_path);
+
+        if relative_path.ends_with('/') {
+            // Check Directory
+            if !full_path.is_dir() {
+                if apply_fix {
+                    std::fs::create_dir_all(&full_path)?;
+                    result.push(format!("  ✅ Created missing directory: {}", relative_path));
+                } else {
+                    result.push(format!("  ⚠️  Missing directory: {}", relative_path));
+                }
+            }
+        } else {
+            // Check File (README, etc.)
+            if !full_path.is_file() {
+                if apply_fix {
+                    std::fs::write(&full_path, "")?; // Or render a template
+                    result.push(format!("  ✅ Created missing file: {}", relative_path));
+                } else {
+                    result.push(format!("  ⚠️  Missing file: {}", relative_path));
+                }
+            }
+        }
+    }
+
+    // TODO: check to see if dependencies match template
+
+    Ok(result)
 }
 
 fn validate_project_settings(
@@ -91,10 +133,10 @@ fn validate_project_settings(
                     *val = serde_yaml::Value::String(expected.to_string());
                     needs_save = true;
                 }
-                result.push(format!("✅ Fixed {}: updated to '{}'", label, expected));
+                result.push(format!("  ✅ Fixed {}: updated to '{}'", label, expected));
             } else {
                 result.push(format!(
-                    "⚠️ Mismatch in {}: expected '{}', but found '{}'",
+                    "  ⚠️ Mismatch in {}: expected '{}', but found '{}'",
                     label, expected, actual
                 ));
             }

@@ -2,13 +2,13 @@ use anyhow::Context;
 use minijinja::Environment;
 use std::{collections::HashMap, path::Path, process::Command};
 
+use crate::project_context::ProjectContext;
 use crate::{
     alias,
     config::{AliasEntry, UinitConfig},
     constants::{self},
     feature::create_assembly_definition,
     fs,
-    new_project::ProjectContext,
     unity_project::UnityProject,
 };
 

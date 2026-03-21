@@ -1,3 +1,3 @@
 # remove everything and recreate
-rm -f TestProject
+rm -rf TestProject
 ./scripts/create_test_env.sh

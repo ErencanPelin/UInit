@@ -2,6 +2,8 @@ use anyhow::Context;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::Path};
 
+use crate::fs;
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AliasEntry {
     pub repo: String,
@@ -45,9 +47,9 @@ impl UinitConfig {
     // TODO: limitation here is if something goes wrong mid-write
     pub fn save(&self, dir: &Path) -> anyhow::Result<()> {
         let path = dir.join("uinit.toml");
-        let text = toml::to_string_pretty(self)?;
-        std::fs::write(&path, text)
-            .with_context(|| format!("Failed to write config file to {:?}", path))?;
+        let text =
+            toml::to_string_pretty(self).with_context(|| "Failed to save uinit as .toml.")?;
+        fs::write_to_file(&text, &path)?;
 
         Ok(())
     }

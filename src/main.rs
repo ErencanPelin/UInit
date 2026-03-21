@@ -10,15 +10,17 @@ mod doctor;
 mod feature;
 mod fs;
 mod new_project;
+mod project_context;
 mod steam;
 mod unity_project;
 use cli::{Cli, Commands, FeatureActions, SteamActions};
 
+use crate::project_context::ProjectContext;
 use crate::{
     cli::{AliasActions, ProjectActions},
     constants::{DEFAULT_COMPANY, DEFAULT_EMAIL},
     doctor::handle_doctor,
-    new_project::{ProjectContext, init_project},
+    new_project::init_project,
     unity_project::UnityProject,
 };
 
@@ -55,7 +57,6 @@ fn main() -> anyhow::Result<()> {
                 steam::init_steam(&ctx, &unity_project)?;
             }
         },
-        Commands::Ci { action: _ } => {}
         Commands::Feature { action } => match action {
             FeatureActions::Create { name } => {
                 feature::init_feature(name, &unity_project)?;

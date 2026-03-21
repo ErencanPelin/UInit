@@ -1,12 +1,15 @@
 use std::path::Path;
 
 use crate::{
-    config::UinitConfig, constants, fs, new_project::ProjectContext, unity_project::UnityProject,
+    config::UinitConfig, constants, fs, project_context::ProjectContext,
+    unity_project::UnityProject,
 };
 use anyhow::{Context, bail};
 use minijinja::{Environment, context};
 
 pub fn init_feature(feature_name: &str, unity_project: &UnityProject) -> anyhow::Result<()> {
+    println!("🚀 Uinit: Adding {} feature module...\n", feature_name);
+
     // Reconstruct the project context from existing metadata so feature generation can run later.
     let config = UinitConfig::load(&unity_project.root)?;
     let ctx: ProjectContext = ProjectContext::from_config(&config);
@@ -25,12 +28,15 @@ pub fn init_feature(feature_name: &str, unity_project: &UnityProject) -> anyhow:
     let editor_folder = feature_folder.join("Editor");
     let tests_folder = feature_folder.join("Tests");
 
-    fs::create_directory(&runtime_folder)?;
-    println!("Created directory: {}", runtime_folder.display());
-    fs::create_directory(&editor_folder)?;
-    println!("Created directory: {}", editor_folder.display());
-    fs::create_directory(&tests_folder)?;
-    println!("Created directory: {}", tests_folder.display());
+    if fs::create_dirs(&runtime_folder)? {
+        println!("  📁 Created: {}", unity_project.rel_path(&runtime_folder));
+    }
+    if fs::create_dirs(&editor_folder)? {
+        println!("  📁 Created: {}", unity_project.rel_path(&editor_folder));
+    }
+    if fs::create_dirs(&tests_folder)? {
+        println!("  📁 Created: {}", unity_project.rel_path(&tests_folder));
+    }
 
     // Create assembly definition files for the feature domain
     let env = Environment::new();
@@ -62,12 +68,14 @@ pub fn init_feature(feature_name: &str, unity_project: &UnityProject) -> anyhow:
         &env,
     )?;
 
+    println!("\n✨ '{}' initialized successfully.", feature_name);
+
     Ok(())
 }
 
 // TODO: move to a shared folder
 pub fn create_assembly_definition(
-    path: &Path,
+    dir_path: &Path,
     template_source: &str,
     ctx: &ProjectContext,
     assembly_type: &str,
@@ -75,36 +83,32 @@ pub fn create_assembly_definition(
     dependencies: Option<&[String]>,
     env: &Environment,
 ) -> anyhow::Result<String> {
-    let asmdef = render_jinja_template(
-        &template_source,
-        &feature_name,
-        &dependencies.unwrap_or(&[]),
-        &ctx,
-        &env,
-    )
-    .with_context(|| {
-        format!(
-            "Failed when trying to render Jinja2 template for assembly definition.\n
-             Assembly Type: {}",
-            &assembly_type
-        )
-    })?;
-
-    let assembly_name_file_name = format!(
-        "com.{}.{}.{}.{}.asmdef",
-        &ctx.company, &ctx.project_name, &feature_name, &assembly_type
+    let assembly_name = format!(
+        "com.{}.{}.{}.{}",
+        ctx.company, ctx.project_name, feature_name, assembly_type
     )
     .to_lowercase();
 
-    std::fs::write(path.join(&assembly_name_file_name), asmdef)?;
+    let file_name = format!("{}.asmdef", assembly_name);
+    let full_path = dir_path.join(&file_name);
 
-    println!(
-        "Created assembly definition: {}",
-        path.join(&assembly_name_file_name).display()
-    );
+    let rendered_content = render_jinja_template(
+        template_source,
+        feature_name,
+        dependencies.unwrap_or(&[]),
+        ctx,
+        env,
+    )
+    .with_context(|| format!("Failed to render {} asmdef", assembly_type))?;
 
-    // return the assembly name for reference in other asmdefs
-    Ok((assembly_name_file_name.replace(".asmdef", "")).to_string())
+    if fs::create_file(&full_path)? {
+        println!("  ✅ Created assembly {}", file_name);
+    }
+
+    std::fs::write(&full_path, rendered_content)
+        .with_context(|| format!("Failed to write asmdef to {:?}", full_path))?;
+
+    Ok(assembly_name)
 }
 
 fn render_jinja_template(

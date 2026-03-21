@@ -22,11 +22,6 @@ pub enum Commands {
         #[command(subcommand)]
         action: SteamActions,
     },
-    /// Generate CI/CD configurations
-    Ci {
-        #[command(subcommand)]
-        action: CiActions,
-    },
     /// Generate feature / module scaffolding
     Feature {
         #[command(subcommand)]
@@ -105,15 +100,6 @@ pub enum SteamActions {
         /// The Steam AppID (use 480 as a temp value)
         #[arg(long)]
         app_id: u32,
-    },
-}
-
-#[derive(Subcommand)]
-pub enum CiActions {
-    /// Generate github actions files
-    Create {
-        #[arg(short, long, default_value = "github")]
-        provider: CiProvider,
     },
 }
 

@@ -1,27 +1,41 @@
 use std::path::Path;
 
-use anyhow::Context;
+use anyhow::{Context, Ok};
 
-/// Creates the whole directory structure based on the path provided.
-pub fn create_directory(path: &Path) -> anyhow::Result<()> {
-    std::fs::create_dir_all(&path)
+/// Creates the directory structure. Returns Ok(true) if created, Ok(false) if it already existed.
+pub fn create_dirs(path: &Path) -> anyhow::Result<bool> {
+    if path.exists() {
+        return Ok(false);
+    }
+    std::fs::create_dir_all(path)
         .with_context(|| format!("Failed to create directory at {:?}", path))?;
-    Ok(())
+
+    Ok(true)
 }
 
-/// Creates a new file at the specified path. Fails if the file already exists.
-pub fn create_file(path: &Path) -> anyhow::Result<()> {
-    std::fs::OpenOptions::new()
-        .create_new(true)
+/// Creates a new file. Returns Ok(true) if created, Ok(false) if it already existed.
+pub fn create_file(path: &Path) -> anyhow::Result<bool> {
+    // We use .create_new(true) which is an atomic "Create or Fail" operation.
+    // This is safer than checking .exists() manually first.
+    let result = std::fs::OpenOptions::new()
         .write(true)
-        .open(path)?;
-    Ok(())
+        .create_new(true)
+        .open(path);
+
+    match result {
+        Result::Ok(_) => Ok(true),
+        Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => Ok(false),
+        Err(e) => {
+            // Rethrow the error with additional context
+            Err(anyhow::Error::new(e).context(format!("Failed to create file at {:?}", path)))
+        }
+    }
 }
 
 /// Recursively copies a directory from `src` to `dst`. Creates the destination directory if it doesn't exist.
 pub fn copy_dir_recursive(src: &Path, dst: &Path) -> anyhow::Result<()> {
     // Ensure destination exists
-    std::fs::create_dir_all(dst)?;
+    create_dirs(dst)?;
 
     for entry in std::fs::read_dir(src)? {
         let entry = entry?;
@@ -37,4 +51,10 @@ pub fn copy_dir_recursive(src: &Path, dst: &Path) -> anyhow::Result<()> {
     Ok(())
 }
 
-// TODO: a shared function to write files with proper error handling
+/// Writes content to a file. Returns Ok(()) on success, or an Error if the write failed.
+pub fn write_to_file(content: &String, path: &Path) -> anyhow::Result<()> {
+    std::fs::write(path, content)
+        .with_context(|| format!("Failed to write to file at {:?}", path))?;
+
+    Ok(())
+}
