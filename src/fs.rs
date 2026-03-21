@@ -53,8 +53,12 @@ pub fn copy_dir_recursive(src: &Path, dst: &Path) -> anyhow::Result<()> {
 
 /// Writes content to a file. Returns Ok(()) on success, or an Error if the write failed.
 pub fn write_to_file(content: &String, path: &Path) -> anyhow::Result<()> {
-    std::fs::write(path, content)
+    let temp_path = path.with_extension("tmp");
+
+    std::fs::write(&temp_path, content)
         .with_context(|| format!("Failed to write to file at {:?}", path))?;
+
+    std::fs::rename(&temp_path, path).with_context(|| "Failed to write swap file")?;
 
     Ok(())
 }
