@@ -15,7 +15,7 @@ impl UnityProject {
         if cwd.join("Assets").exists() && cwd.join("ProjectSettings").exists() {
             Ok(Self { root: cwd })
         } else {
-            anyhow::bail!("Please run this from inside the `Assets` directory.");
+            anyhow::bail!("Please run this from the Project's root directory.");
         }
     }
 
@@ -63,7 +63,6 @@ impl UnityProject {
         // Update or Insert
         let existing = deps.insert(package_name.to_string(), version.into());
 
-        // Use your fs module for the write
         let output = serde_json::to_string_pretty(&manifest)?;
         fs::write_to_file(&output, &path)?;
 

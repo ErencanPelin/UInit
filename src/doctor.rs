@@ -110,7 +110,6 @@ fn validate_project_settings(
     let content = std::fs::read_to_string(&settings_path)?;
     let mut settings: serde_yaml::Value = serde_yaml::from_str(&content)?;
 
-    // Use a scope or a separate block to get a mutable handle to PlayerSettings
     let player = settings
         .get_mut("PlayerSettings")
         .ok_or_else(|| anyhow::anyhow!("'PlayerSettings' block missing"))?;
@@ -123,12 +122,10 @@ fn validate_project_settings(
     let mut needs_save = false;
 
     for (key, expected, label) in configuration_map {
-        // 1. Get the current value
         let actual = player.get(key).and_then(|v| v.as_str()).unwrap_or("");
 
         if actual != *expected {
             if apply_fix {
-                // 2. Perform the actual mutation in the YAML tree
                 if let Some(val) = player.get_mut(key) {
                     *val = serde_yaml::Value::String(expected.to_string());
                     needs_save = true;
@@ -143,7 +140,6 @@ fn validate_project_settings(
         }
     }
 
-    // 3. Save only if we modified something and fix was requested
     if apply_fix && needs_save {
         let output = serde_yaml::to_string(&settings)?;
         std::fs::write(&settings_path, output)?;

@@ -18,19 +18,17 @@ pub fn init_project(ctx: &ProjectContext, unity_project: &UnityProject) -> anyho
         ctx.project_name, ctx.template_alias
     );
 
-    // 1. Filesystem & Template Generation
     create_from_template(ctx, unity_project)
         .with_context(|| format!("Failed to apply template: {}", ctx.template_alias))?;
 
-    // 2. Unity Internal Settings Update
     modify_project_settings(ctx, unity_project)
-        .context("Failed to update Unity ProjectSettings.asset.")?;
+        .with_context(|| "Failed to update Unity ProjectSettings.asset.")?;
 
-    // 3. Context Persistence
+    // write config file
     let config: UinitConfig = ctx.into();
     config
         .save(&unity_project.root)
-        .context("Failed to save uinit config to disk.")?;
+        .with_context(|| "Failed to save uinit config to disk.")?;
 
     println!("\n✨ '{}' initialized successfully.", ctx.project_name);
     Ok(())
@@ -55,10 +53,11 @@ fn create_from_template(ctx: &ProjectContext, unity_project: &UnityProject) -> a
         ("README.md", README_JINJA),
     ]);
 
+    // create each defined file and path
     for &raw_path in *paths {
         let template_path = raw_path.replace("{}", &ctx.project_name);
         let full_path = unity_project.root.join(&template_path);
-        let relative_path = unity_project.rel_path(&full_path);
+        let relative_path: String = unity_project.rel_path(&full_path);
 
         if raw_path.ends_with('/') {
             if fs::create_dirs(&full_path)? {
@@ -67,7 +66,6 @@ fn create_from_template(ctx: &ProjectContext, unity_project: &UnityProject) -> a
             continue;
         }
 
-        // Create the file
         if fs::create_file(&full_path)? {
             println!("  📄 Created: {}", relative_path);
         }
@@ -86,6 +84,7 @@ fn create_from_template(ctx: &ProjectContext, unity_project: &UnityProject) -> a
     }
 
     // Dependencies
+    // TODO: split this into its own function
     for (pkg, ver) in *deps {
         unity_project.add_package(pkg, ver)?;
     }
@@ -107,7 +106,6 @@ fn modify_project_settings(
     let mut settings: serde_yaml::Value =
         serde_yaml::from_str(&raw_yaml).with_context(|| "Failed to parse ProjectSettings.asset")?;
 
-    // Surgical Update: Flatten the nesting
     if let Some(player) = settings.get_mut("PlayerSettings") {
         if let Some(c) = player.get_mut("companyName") {
             *c = ctx.company.clone().into();
@@ -120,7 +118,6 @@ fn modify_project_settings(
     let yaml_out =
         serde_yaml::to_string(&settings).with_context(|| "Failed to serialize settings")?;
 
-    // Use the bool return from your fs module to provide better feedback
     fs::write_to_file(&yaml_out, &path)?;
     println!("  ✅ Updated companyName and productName in project settings.");
 

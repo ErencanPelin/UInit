@@ -15,8 +15,7 @@ pub fn create_dirs(path: &Path) -> anyhow::Result<bool> {
 
 /// Creates a new file. Returns Ok(true) if created, Ok(false) if it already existed.
 pub fn create_file(path: &Path) -> anyhow::Result<bool> {
-    // We use .create_new(true) which is an atomic "Create or Fail" operation.
-    // This is safer than checking .exists() manually first.
+    // We use .create_new(true) to not overwrite any existing files
     let result = std::fs::OpenOptions::new()
         .write(true)
         .create_new(true)

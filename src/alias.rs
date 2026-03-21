@@ -37,7 +37,7 @@ pub fn list_aliases(unity_project: &UnityProject) -> anyhow::Result<()> {
     let aliases = get_aliases(&config);
 
     let mut table = Table::new();
-    // Use a professional "Modern" or "No Border" look
+
     table.set_header(vec!["Alias", "Type", "Repo Path", "Repo"]);
 
     let mut keys: Vec<_> = aliases.keys().collect();

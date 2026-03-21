@@ -28,7 +28,6 @@ fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
     let unity_project = UnityProject::detect()?;
-    println!("Running inside: {}", unity_project.root.display());
 
     match &cli.command {
         Commands::Project { action } => match action {

@@ -10,7 +10,6 @@ use minijinja::{Environment, context};
 pub fn init_feature(feature_name: &str, unity_project: &UnityProject) -> anyhow::Result<()> {
     println!("🚀 Uinit: Adding {} feature module...\n", feature_name);
 
-    // Reconstruct the project context from existing metadata so feature generation can run later.
     let config = UinitConfig::load(&unity_project.root)?;
     let ctx: ProjectContext = ProjectContext::from_config(&config);
 

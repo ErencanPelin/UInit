@@ -104,11 +104,15 @@ fn fetch_directory(
     local_dest_path: &Path,
 ) -> anyhow::Result<()> {
     let temp_dir = ".uinit_temp";
+
+    // FIXME: we should always clean up the temp dir if a failure occurs anywhere in this function
+    // cleanup old temp dir if it still exists (e.g. a mid failed process)
     if Path::new(temp_dir).exists() {
         std::fs::remove_dir_all(temp_dir)?;
     }
 
-    // 1. Initialize and add remote
+    // Initialize and add remote to a temp directory
+    // We pull the repo into the temp directory then move files to the correct destination in the project
     Command::new("git").args(["init", temp_dir]).output()?;
     let cmd_dir = Path::new(temp_dir);
 
@@ -117,20 +121,20 @@ fn fetch_directory(
         .args(["remote", "add", "origin", repo])
         .output()?;
 
-    // 2. Enable sparse-checkout (Modern Style)
+    // Enable sparse-checkout
     Command::new("git")
         .current_dir(cmd_dir)
         .args(["sparse-checkout", "init", "--cone"])
         .output()?;
 
-    // 3. Set the specific path
-    // CRITICAL: remote_folder_path must match the repo root structure exactly
+    // Set the specific path to fetch so that we don't pull the whole repo. We need sparse-checkout for this
+    // Note: remote_folder_path must match the repo root structure exactly
     Command::new("git")
         .current_dir(cmd_dir)
         .args(["sparse-checkout", "set", remote_folder_path])
         .output()?;
 
-    // 4. Pull using HEAD to auto-detect main/master
+    // Pull using HEAD to auto-detect main/master
     let pull_status = Command::new("git")
         .current_dir(cmd_dir)
         .args(["pull", "--depth", "1", "origin", "HEAD"])
@@ -140,7 +144,7 @@ fn fetch_directory(
         anyhow::bail!("Git pull failed. Check your internet connection or repository URL.");
     }
 
-    // 5. Verify and Copy
+    // Copy to the correct path in the project files
     let downloaded_path = cmd_dir.join(remote_folder_path);
     if downloaded_path.exists() && downloaded_path.is_dir() {
         let folder_name = Path::new(remote_folder_path)
@@ -149,7 +153,6 @@ fn fetch_directory(
 
         let final_local_path = local_dest_path.join(folder_name);
 
-        // Now perform the copy
         fs::copy_dir_recursive(&downloaded_path, &final_local_path)?;
     } else {
         // Debug: List files to see what Git actually pulled
@@ -163,6 +166,7 @@ fn fetch_directory(
         );
     }
 
+    // cleanup the temp directory
     std::fs::remove_dir_all(temp_dir)?;
     Ok(())
 }
@@ -170,13 +174,10 @@ fn fetch_directory(
 fn fetch_file(repo: &str, remote_file_path: &str, local_dest_dir: &Path) -> anyhow::Result<()> {
     let temp_dir = ".uinit_temp";
 
-    // 1. Cleanup & Setup
     if Path::new(temp_dir).exists() {
         std::fs::remove_dir_all(temp_dir).context("Failed to clean up old temp directory")?;
     }
 
-    // 2. Git Sparse-Checkout Sequence
-    // Use .status() or check .output() success to catch Git errors early
     Command::new("git")
         .args(["init", temp_dir])
         .output()
@@ -194,14 +195,11 @@ fn fetch_file(repo: &str, remote_file_path: &str, local_dest_dir: &Path) -> anyh
     run_git(&["remote", "add", "origin", repo])?;
     run_git(&["config", "core.sparseCheckout", "true"])?;
 
-    // 3. Define the specific file
     let sparse_info = cmd_dir.join(".git/info/sparse-checkout");
     std::fs::write(sparse_info, format!("{}\n", remote_file_path))?;
 
     run_git(&["pull", "--depth", "1", "origin", "HEAD"])?;
 
-    // 4. Resolve the Final Path
-    // Extract "Singleton.cs" from "utils/core/Singleton.cs"
     let file_name = Path::new(remote_file_path)
         .file_name()
         .ok_or_else(|| anyhow::anyhow!("Invalid remote file path: {}", remote_file_path))?;
@@ -209,7 +207,6 @@ fn fetch_file(repo: &str, remote_file_path: &str, local_dest_dir: &Path) -> anyh
     let downloaded_file = cmd_dir.join(remote_file_path);
     let target_path = local_dest_dir.join(file_name);
 
-    // 5. Move/Copy
     if downloaded_file.is_file() {
         std::fs::create_dir_all(local_dest_dir)
             .with_context(|| format!("Failed to create directory: {}", local_dest_dir.display()))?;
@@ -222,7 +219,6 @@ fn fetch_file(repo: &str, remote_file_path: &str, local_dest_dir: &Path) -> anyh
         anyhow::bail!("File not found in repository at path: {}", remote_file_path);
     }
 
-    // 6. Final Cleanup
     let _ = std::fs::remove_dir_all(temp_dir);
     Ok(())
 }
