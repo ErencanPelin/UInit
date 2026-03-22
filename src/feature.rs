@@ -9,6 +9,8 @@ use minijinja::{Environment, context};
 
 pub fn init_feature(
     feature_name: &str,
+    no_editor: bool,
+    no_tests: bool,
     unity_project: &UnityProject,
     reporter: &Reporter,
 ) -> anyhow::Result<()> {
@@ -34,24 +36,12 @@ pub fn init_feature(
     }
 
     let runtime_folder = feature_folder.join("Runtime");
-    let editor_folder = feature_folder.join("Editor");
-    let tests_folder = feature_folder.join("Tests");
-
     reporter.info("Creating runtime folder.");
     if fs::create_dirs(&runtime_folder)? {
         println!("  📁 Created: {}", unity_project.rel_path(&runtime_folder));
     }
-    reporter.info("Creating editor folder.");
-    if fs::create_dirs(&editor_folder)? {
-        println!("  📁 Created: {}", unity_project.rel_path(&editor_folder));
-    }
-    reporter.info("Creating tests folder.");
-    if fs::create_dirs(&tests_folder)? {
-        println!("  📁 Created: {}", unity_project.rel_path(&tests_folder));
-    }
 
-    // Create assembly definition files for the feature domain
-    reporter.info("Creating required assemblies.");
+    reporter.info("Creating runtime assembly.");
     let env = Environment::new();
     let runtime_assembly_name = create_assembly_definition(
         &runtime_folder,
@@ -63,26 +53,46 @@ pub fn init_feature(
         None,
         &env,
     )?;
-    create_assembly_definition(
-        &editor_folder,
-        constants::ASSEMBLY_DEF_EDITOR_JINJA,
-        &ctx,
-        reporter,
-        "editor",
-        feature_name,
-        Some(&[runtime_assembly_name.clone()]),
-        &env,
-    )?;
-    create_assembly_definition(
-        &tests_folder,
-        constants::ASSEMBLY_DEF_TESTS_JINJA,
-        &ctx,
-        reporter,
-        "tests",
-        feature_name,
-        Some(&[runtime_assembly_name.clone()]),
-        &env,
-    )?;
+
+    if !no_editor {
+        let editor_folder = feature_folder.join("Editor");
+        reporter.info("Creating editor folder.");
+        if fs::create_dirs(&editor_folder)? {
+            println!("  📁 Created: {}", unity_project.rel_path(&editor_folder));
+        }
+
+        reporter.info("Creating editor assembly.");
+        create_assembly_definition(
+            &editor_folder,
+            constants::ASSEMBLY_DEF_EDITOR_JINJA,
+            &ctx,
+            reporter,
+            "editor",
+            feature_name,
+            Some(&[runtime_assembly_name.clone()]),
+            &env,
+        )?;
+    }
+
+    if !no_tests {
+        let tests_folder = feature_folder.join("Tests");
+        reporter.info("Creating tests folder.");
+        if fs::create_dirs(&tests_folder)? {
+            println!("  📁 Created: {}", unity_project.rel_path(&tests_folder));
+        }
+
+        reporter.info("Creating tests assembly.");
+        create_assembly_definition(
+            &tests_folder,
+            constants::ASSEMBLY_DEF_TESTS_JINJA,
+            &ctx,
+            reporter,
+            "tests",
+            feature_name,
+            Some(&[runtime_assembly_name.clone()]),
+            &env,
+        )?;
+    }
 
     println!("\n✨ '{}' initialized successfully.", feature_name);
 

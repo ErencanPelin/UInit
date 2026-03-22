@@ -1,4 +1,5 @@
 use anyhow::Context;
+use dialoguer::{Confirm, theme::ColorfulTheme};
 use minijinja::Environment;
 use std::{collections::HashMap, path::Path, process::Command};
 
@@ -23,6 +24,21 @@ pub fn handle_add(
     let aliases: HashMap<String, AliasEntry> = alias::get_aliases(&config);
 
     if let Some(alias_entry) = aliases.get(alias) {
+        let confirmation = Confirm::with_theme(&ColorfulTheme::default())
+            .with_prompt(format!(
+                "This will add all files and folders in {} from the repo {}.\n
+        Are you sure?",
+                alias_entry.path, alias_entry.repo
+            ))
+            .default(false)
+            .wait_for_newline(true)
+            .interact()
+            .unwrap_or(false);
+
+        if !confirmation {
+            return Ok(());
+        }
+
         println!(
             "Adding '{}' from repo '{}' at path '{}'",
             alias, alias_entry.repo, alias_entry.path

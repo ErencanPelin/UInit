@@ -27,24 +27,24 @@ curl --proto '=https' --tlsv1.2 -LsSf https://github.com/ErencanPelin/UInit/rele
 
 ### To setup UInit in your Unity project
 ```sh
-uinit project init --template <GAME | PACKAGE> <PROJECT_NAME>
+uinit init --template <GAME | PACKAGE> <PROJECT_NAME>
 # e.g. with all optional fields
-uinit project init --template package --company ErencanPelin --email myemail@mailserver.com MyNewPackage
+uinit init --template package --company ErencanPelin --email myemail@mailserver.com MyNewPackage
 ```
 
 ### To init steam
 ```sh
-uinit steam init --app-id <APP_ID>
+uinit setup steam --app-id <APP_ID>
 # e.g. 480 = Spacewar
-uinit steam init --app-id 480
+uinit setup steam --app-id 480
 ```
 
 ### To create a new feature domain
 A feature domain lives inside /Scripts. This command creates sub folders for the feature (runtime, editor, tests) as well as the necessary assembly definition files for those sub folders.
 ```sh
-uinit feature create <FEATURE_NAME>
+uinit gen <FEATURE_NAME> [--no-editor] [--no-tests]
 # e.g.
-uinit feature create MyNewFeature
+uinit gen MyNewFeature
 ```
 
 ### To import predefined tool scripts, utils or feature modules
@@ -72,4 +72,9 @@ uinit alias rm core-utils
 
 # list available aliases
 uinit alias list
+```
+
+### Check general health of Unity Project
+```sh
+uinit doctor
 ```

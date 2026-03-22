@@ -17,7 +17,7 @@ pub fn init_steam(
     // Create steam_appid.txt in the root of the Unity project
     let steam_appid_path = unity_project.root.join("steam_appid.txt");
 
-    reporter.info("Creating steam-appid.txt file.");
+    reporter.info("Creating steam_appid.txt file.");
     let created = fs::create_file(&steam_appid_path)?;
 
     if created {
@@ -33,7 +33,7 @@ pub fn init_steam(
         ));
     }
 
-    reporter.info("Writing to steam-appid.txt file.");
+    reporter.info("Writing to steam_appid.txt file.");
     fs::write_to_file(&ctx.app_id.to_string(), &steam_appid_path)?;
     reporter.success(&format!(
         "Synced steam_appid.txt with AppID: {}",
