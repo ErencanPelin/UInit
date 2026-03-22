@@ -18,7 +18,12 @@ The aim of this project is to initialise Unity projects with the core folder str
 See [DEVELOPING.md](/DEVELOPING.md)
 
 ## Getting Started
-Run `uinit --help` in your terminal to get started.
+1. Install the latest version using
+```bash
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/ErencanPelin/UInit/releases/download/v0.1.1/uinit-installer.sh | sh
+```
+2. Run `uinit --help` in your terminal to get started.
+3. Update your current version with `uinit-update`
 
 ### To setup UInit in your Unity project
 ```sh
