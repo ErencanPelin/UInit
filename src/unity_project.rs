@@ -1,8 +1,5 @@
 use std::path::Path;
 
-use crate::fs;
-use anyhow::Context;
-
 pub struct UnityProject {
     pub root: std::path::PathBuf,
 }

@@ -8,10 +8,10 @@ use crate::constants::{
     CHANGELOG_TEMPLATE, GITIGNORE_TEMPLATE, LICENSE_JINJA, PACKAGE_JINJA, PROJECT_TEMPLATES,
     README_JINJA,
 };
+use crate::fs;
 use crate::project_context::ProjectContext;
 use crate::reporter::Reporter;
 use crate::unity_project::UnityProject;
-use crate::{fs, reporter};
 
 pub fn init_project(
     ctx: &ProjectContext,

@@ -1,8 +1,5 @@
 use crate::{
-    constants::STEAMWORKS_PACKAGE,
-    fs,
-    new_project::add_package,
-    reporter::{self, Reporter},
+    constants::STEAMWORKS_PACKAGE, fs, new_project::add_package, reporter::Reporter,
     unity_project::UnityProject,
 };
 

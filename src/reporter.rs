@@ -13,10 +13,6 @@ impl Reporter {
         println!("  ✅ {}", msg);
     }
 
-    pub fn warn(&self, msg: &str) {
-        println!("  ⚠️ {}", msg);
-    }
-
     pub fn info(&self, msg: &str) {
         if self.is_verbose {
             println!("      [info] {}", msg);

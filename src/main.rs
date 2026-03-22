@@ -14,6 +14,7 @@ mod project_context;
 mod reporter;
 mod steam;
 mod unity_project;
+mod version;
 use cli::{Cli, Commands, FeatureActions, SteamActions};
 
 use crate::project_context::ProjectContext;
@@ -79,6 +80,8 @@ fn main() -> anyhow::Result<()> {
         },
         Commands::Doctor { fix } => handle_doctor(&unity_project, &reporter, *fix)?,
     }
+
+    version::check_for_updates(&reporter)?;
 
     Ok(())
 }

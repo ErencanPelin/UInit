@@ -3,7 +3,7 @@ use minijinja::Environment;
 use std::{collections::HashMap, path::Path, process::Command};
 
 use crate::project_context::ProjectContext;
-use crate::reporter::{self, Reporter};
+use crate::reporter::Reporter;
 use crate::{
     alias,
     config::{AliasEntry, UinitConfig},
