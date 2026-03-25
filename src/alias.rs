@@ -1,14 +1,34 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt};
 
 use anyhow::bail;
+use clap::ValueEnum;
 use comfy_table::Table;
+use serde::{Deserialize, Serialize};
 
 use crate::{
-    cli::AliasType,
     config::{AliasEntry, UinitConfig},
     constants::DEFAULT_ALIASES,
     unity_project::UnityProject,
 };
+
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, ValueEnum)] // Add ValueEnum here
+#[serde(rename_all = "lowercase")]
+pub enum AliasType {
+    Util,
+    Module,
+    Tool,
+}
+
+// Keep your Display implementation for the 'list' table
+impl fmt::Display for AliasType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            AliasType::Util => write!(f, "util"),
+            AliasType::Module => write!(f, "module"),
+            AliasType::Tool => write!(f, "tool"),
+        }
+    }
+}
 
 pub fn get_aliases(config: &UinitConfig) -> HashMap<String, AliasEntry> {
     // merge alias overrides with alias from constants so that user specified aliases can override default ones

@@ -15,12 +15,13 @@ mod reporter;
 mod steam;
 mod unity_project;
 mod version;
-use cli::{Cli, Commands, FeatureActions, SteamActions};
+use cli::{Cli, Commands};
 
+use crate::cli::Integration;
 use crate::project_context::ProjectContext;
 use crate::reporter::Reporter;
 use crate::{
-    cli::{AliasActions, ProjectActions},
+    cli::AliasActions,
     constants::{DEFAULT_COMPANY, DEFAULT_EMAIL},
     doctor::handle_doctor,
     new_project::init_project,
@@ -34,37 +35,38 @@ fn main() -> anyhow::Result<()> {
     let unity_project = UnityProject::detect()?;
 
     match &cli.command {
-        Commands::Project { action } => match action {
-            ProjectActions::Init {
-                name,
-                template,
-                company,
-                email,
-            } => {
-                let ctx = ProjectContext {
-                    template_alias: template.to_string(),
-                    project_name: name.to_string(),
-                    // Clone the string if it exists, otherwise use the default
-                    company: company
-                        .clone()
-                        .unwrap_or_else(|| DEFAULT_COMPANY.to_string()),
-                    email: email.clone().unwrap_or_else(|| DEFAULT_EMAIL.to_string()),
-                    year: chrono::Utc::now().year(),
-                };
-                init_project(&ctx, &unity_project, &reporter)?;
-            }
-        },
-        Commands::Steam { action } => match action {
-            SteamActions::Init { app_id } => {
+        Commands::Init {
+            name,
+            template,
+            company,
+            email,
+        } => {
+            let ctx = ProjectContext {
+                template_alias: template.to_string(),
+                project_name: name.to_string(),
+                // Clone the string if it exists, otherwise use the default
+                company: company
+                    .clone()
+                    .unwrap_or_else(|| DEFAULT_COMPANY.to_string()),
+                email: email.clone().unwrap_or_else(|| DEFAULT_EMAIL.to_string()),
+                year: chrono::Utc::now().year(),
+            };
+            init_project(&ctx, &unity_project, &reporter)?;
+        }
+        Commands::Setup(args) => match &args.integration {
+            Integration::Steam { app_id } => {
                 let ctx = steam::SteamContext { app_id: *app_id };
                 steam::init_steam(&ctx, &unity_project, &reporter)?;
             }
+            Integration::Ci { host, template } => todo!(),
         },
-        Commands::Feature { action } => match action {
-            FeatureActions::Create { name } => {
-                feature::init_feature(name, &unity_project, &reporter)?;
-            }
-        },
+        Commands::Gen {
+            name,
+            no_editor,
+            no_tests,
+        } => {
+            feature::init_feature(name, *no_editor, *no_tests, &unity_project, &reporter)?;
+        }
         Commands::Add { alias } => {
             add::handle_add(alias, &unity_project, &reporter)?;
         }
@@ -76,7 +78,7 @@ fn main() -> anyhow::Result<()> {
                 path,
                 alias_type,
             } => alias::add_alias(&alias, &repo, &path, &alias_type, &unity_project)?,
-            AliasActions::Rm { alias } => alias::remove_alias(&alias, &unity_project)?,
+            AliasActions::Remove { alias } => alias::remove_alias(&alias, &unity_project)?,
         },
         Commands::Doctor { fix } => handle_doctor(&unity_project, &reporter, *fix)?,
     }
