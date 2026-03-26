@@ -24,11 +24,7 @@ pub const PROJECT_TEMPLATES: &[(&str, &[&str], &[(&str, &str)])] = &[
             "Assets/{}/Textures/",
             "Assets/../.gitignore",
         ],
-        &[
-            ("nuget.moq", "2.0.0"),
-            ("com.unity.test-framework", "1.6.0"),
-            ("com.unity.nuget.newtonsoft-json", "3.2.2"),
-        ], // dependencies
+        &[("com.unity.nuget.newtonsoft-json", "3.2.2")], // dependencies
     ),
     (
         "package",
@@ -49,23 +45,9 @@ pub const PROJECT_TEMPLATES: &[(&str, &[&str], &[(&str, &str)])] = &[
             "Assets/{}/package.json",
             "Assets/../.gitignore",
         ],
-        &[
-            ("nuget.moq", "2.0.0"),
-            ("com.unity.test-framework", "1.6.0"),
-            ("com.unity.nuget.newtonsoft-json", "3.2.2"),
-        ], // dependencies
+        &[("com.unity.nuget.newtonsoft-json", "3.2.2")], // dependencies
     ),
 ];
-
-// Alias, (package, version)
-pub const DEPENDENCY_SETS: &[(&str, &[(&str, &str)])] = &[(
-    "testing",
-    &[
-        ("nuget.moq", "2.0.0"),
-        ("com.unity.test-framework", "1.6.0"),
-        ("com.unity.nuget.newtonsoft-json", "3.2.2"),
-    ],
-)];
 
 // Template files contents for file creation and jinja rendering.
 pub const PACKAGE_JINJA: &str = include_str!("./templates/package.json.jinja2");
@@ -85,39 +67,3 @@ pub const STEAMWORKS_PACKAGE: (&str, &str) = (
     "com.rlabrecque.steamworks.net",
     "https://github.com/rlabrecque/Steamworks.NET.git?path=/com.rlabrecque.steamworks.net#2024.8.0",
 );
-
-// Aliases for commonly used code that are fetched from external repositories.
-// The key is the alias typed by the user, the value is a tuple of (repo_url, path_in_repo).
-pub const DEFAULT_ALIASES: &[(&str, &str, &str, &str)] = &[
-    (
-        "core",
-        "https://github.com/ErencanPelin/Unity-Utils",
-        "Utils/Core/",
-        "util",
-    ),
-    (
-        "predicates",
-        "https://github.com/ErencanPelin/Unity-Utils",
-        "Utils/Predicates/",
-        "util",
-    ),
-    // TODO: these modules are not setup in the unity-utils repo yet
-    // (
-    //     "interaction",
-    //     "https://github.com/ErencanPelin/Unity-Utils",
-    //     "Modules/Interactions/",
-    //     "module",
-    // ),
-    // (
-    //     "statemachines",
-    //     "https://github.com/ErencanPelin/Unity-Utils",
-    //     "Modules/StateMachines/",
-    //     "module",
-    // ),
-    (
-        "blender-exporter",
-        "https://github.com/ErencanPelin/Unity-Utils",
-        "Tools/blender_export.py",
-        "tool",
-    ),
-];

@@ -2,7 +2,7 @@ use chrono::Datelike;
 use clap::Parser;
 
 mod add;
-mod alias;
+mod alias_registry;
 mod cli;
 mod config;
 mod constants;
@@ -11,6 +11,7 @@ mod feature;
 mod fs;
 mod new_project;
 mod project_context;
+mod remotes;
 mod reporter;
 mod steam;
 mod unity_project;
@@ -21,7 +22,7 @@ use crate::cli::Integration;
 use crate::project_context::ProjectContext;
 use crate::reporter::Reporter;
 use crate::{
-    cli::AliasActions,
+    cli::RemotesActions,
     constants::{DEFAULT_COMPANY, DEFAULT_EMAIL},
     doctor::handle_doctor,
     new_project::init_project,
@@ -67,18 +68,20 @@ fn main() -> anyhow::Result<()> {
         } => {
             feature::init_feature(name, *no_editor, *no_tests, &unity_project, &reporter)?;
         }
-        Commands::Add { alias } => {
-            add::handle_add(alias, &unity_project, &reporter)?;
+        Commands::Add { alias, path } => {
+            add::handle_add(alias, &path, &unity_project, &reporter)?;
         }
-        Commands::Alias { action } => match action {
-            AliasActions::List {} => alias::list_aliases(&unity_project)?,
-            AliasActions::Add {
+        Commands::Remote { action } => match action {
+            RemotesActions::List {} => remotes::list_aliases(&unity_project, &reporter)?,
+            RemotesActions::Add {
                 alias,
                 repo,
                 path,
-                alias_type,
-            } => alias::add_alias(&alias, &repo, &path, &alias_type, &unity_project)?,
-            AliasActions::Remove { alias } => alias::remove_alias(&alias, &unity_project)?,
+                category: alias_type,
+            } => remotes::add_alias(&alias, &repo, &path, &alias_type, &unity_project, &reporter)?,
+            RemotesActions::Remove { alias } => {
+                remotes::remove_alias(&alias, &unity_project, &reporter)?
+            }
         },
         Commands::Doctor { fix } => handle_doctor(&unity_project, &reporter, *fix)?,
     }

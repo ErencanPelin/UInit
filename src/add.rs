@@ -1,13 +1,15 @@
 use anyhow::Context;
 use dialoguer::{Confirm, theme::ColorfulTheme};
 use minijinja::Environment;
-use std::{collections::HashMap, path::Path, process::Command};
+use std::path::PathBuf;
+use std::{path::Path, process::Command};
 
+use crate::alias_registry::{AliasRegistry, RemoteResource, ResolvedResource};
+use crate::new_project::add_package;
 use crate::project_context::ProjectContext;
 use crate::reporter::Reporter;
 use crate::{
-    alias,
-    config::{AliasEntry, UinitConfig},
+    config::UinitConfig,
     constants::{self},
     feature::create_assembly_definition,
     fs,
@@ -16,97 +18,147 @@ use crate::{
 
 pub fn handle_add(
     alias: &str,
+    path: &Option<String>,
     unity_project: &UnityProject,
     reporter: &Reporter,
 ) -> anyhow::Result<()> {
     let config = UinitConfig::load(&unity_project.root)?;
     let ctx = ProjectContext::from_config(&config);
-    let aliases: HashMap<String, AliasEntry> = alias::get_aliases(&config);
+    let alias_registry = AliasRegistry::load(&config);
 
-    if let Some(alias_entry) = aliases.get(alias) {
-        let confirmation = Confirm::with_theme(&ColorfulTheme::default())
-            .with_prompt(format!(
-                "This will add all files and folders in {} from the repo {}.\n
+    match alias_registry.resolve_alias(alias) {
+        Some(ResolvedResource::Bundle(deps)) => {
+            let confirmation = Confirm::with_theme(&ColorfulTheme::default())
+                .with_prompt(format!(
+                    "This will add {} packages from the '{}' bundle.\n
+                    Are you sure?",
+                    deps.len(),
+                    alias
+                ))
+                .default(false)
+                .wait_for_newline(true)
+                .interact()
+                .unwrap_or(false);
+
+            if !confirmation {
+                return Ok(());
+            }
+
+            for dep in &deps {
+                add_package(&unity_project, &reporter, &dep.name, &dep.version)?;
+            }
+
+            reporter.success(&format!("Successfully added {} packages.", deps.len()));
+        }
+        Some(ResolvedResource::Remote(resource)) => {
+            let confirmation = Confirm::with_theme(&ColorfulTheme::default())
+                .with_prompt(format!(
+                    "This will add all files and folders in {} from the repo {}.\n
         Are you sure?",
-                alias_entry.path, alias_entry.repo
-            ))
-            .default(false)
-            .wait_for_newline(true)
-            .interact()
-            .unwrap_or(false);
+                    resource.path, resource.url
+                ))
+                .default(false)
+                .wait_for_newline(true)
+                .interact()
+                .unwrap_or(false);
 
-        if !confirmation {
-            return Ok(());
+            if !confirmation {
+                return Ok(());
+            }
+
+            println!(
+                "Adding '{}' from repo '{}' at path '{}'",
+                alias, resource.url, resource.path
+            );
+
+            match resource.category.to_lowercase().as_str() {
+                "util" => import_util(&path, &ctx, &unity_project, &reporter, &resource)?,
+                "module" => import_module(&path, &ctx, &unity_project, &reporter, &resource)?,
+                "tool" => import_tool(&path, &unity_project, &reporter, &resource)?,
+                _ => {}
+            }
+
+            reporter.success(&format!(
+                "Successfully added {} '{}' from {}:{:?}",
+                resource.category, alias, resource.url, resource.path
+            ));
         }
-
-        println!(
-            "Adding '{}' from repo '{}' at path '{}'",
-            alias, alias_entry.repo, alias_entry.path
-        );
-
-        match alias_entry.alias_type.to_lowercase().as_str() {
-            "util" => import_util(&ctx, &unity_project, &reporter, &alias_entry)?,
-            "module" => import_module(&ctx, &unity_project, &reporter, &alias_entry)?,
-            "tool" => import_tool(&unity_project, &reporter, &alias_entry)?,
-            _ => {}
-        }
-
-        reporter.success(&format!(
-            "Successfully added {} '{}'",
-            alias_entry.alias_type, alias
-        ));
-    } else {
-        anyhow::bail!(
+        None => anyhow::bail!(
             "Alias '{}' not found in configuration. Check your 'uinit.toml' or use 'uinit alias list' to see available aliases.",
             alias
-        )
+        ),
     }
-
     Ok(())
 }
 
 fn import_tool(
+    path: &Option<String>,
     unity_project: &UnityProject,
     reporter: &Reporter,
-    alias_entry: &AliasEntry,
+    remote_resource: &RemoteResource,
 ) -> anyhow::Result<()> {
-    let local_path = &unity_project.root.join("Tools");
+    // define default path
+    let local_path = path
+        .as_ref()
+        .map(PathBuf::from)
+        .unwrap_or_else(|| unity_project.root.join("Tools"));
 
-    fetch_file(&reporter, &alias_entry.repo, &alias_entry.path, &local_path)?;
+    fetch_file(
+        &reporter,
+        &remote_resource.url,
+        &remote_resource.path,
+        &local_path,
+    )?;
 
     Ok(())
 }
 
 fn import_module(
+    path: &Option<String>,
     ctx: &ProjectContext,
     unity_project: &UnityProject,
     reporter: &Reporter,
-    alias_entry: &AliasEntry,
+    remote_resource: &RemoteResource,
 ) -> anyhow::Result<()> {
-    // fetch and move into the project
-    let local_path = &unity_project
-        .assets_dir()
-        .join(&ctx.project_name)
-        .join("Scripts");
+    // define default path
+    let local_path = path.as_ref().map(PathBuf::from).unwrap_or_else(|| {
+        unity_project
+            .assets_dir()
+            .join(&ctx.project_name)
+            .join("Scripts")
+    });
 
-    fetch_directory(&reporter, &alias_entry.repo, &alias_entry.path, &local_path)?;
+    fetch_directory(
+        &reporter,
+        &remote_resource.url,
+        &remote_resource.path,
+        &local_path,
+    )?;
 
     Ok(())
 }
 
 fn import_util(
+    path: &Option<String>,
     ctx: &ProjectContext,
     unity_project: &UnityProject,
     reporter: &Reporter,
-    alias_entry: &AliasEntry,
+    remote_resource: &RemoteResource,
 ) -> anyhow::Result<()> {
-    // fetch and move into the project
-    let local_path = &unity_project
-        .assets_dir()
-        .join(&ctx.project_name)
-        .join("Scripts/Utils");
+    // define default path
+    let local_path = path.as_ref().map(PathBuf::from).unwrap_or_else(|| {
+        unity_project
+            .assets_dir()
+            .join(&ctx.project_name)
+            .join("Scripts/Utils")
+    });
 
-    fetch_directory(&reporter, &alias_entry.repo, &alias_entry.path, &local_path)?;
+    fetch_directory(
+        &reporter,
+        &remote_resource.url,
+        &remote_resource.path,
+        &local_path,
+    )?;
 
     // create assembly definition for the utils folder if it doesn't exist
     let assembly_name_file_name =

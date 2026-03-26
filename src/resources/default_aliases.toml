@@ -1,0 +1,33 @@
+# These map a single alias to multiple Unity Package Manager entries.
+[bundles.testing]
+dependencies = [
+    { name = "com.unity.test-framework", version = "1.6.0" },
+    { name = "nuget.moq", version = "2.0.0" },
+]
+
+[bundles.ui]
+dependencies = [
+    { name = "com.unity.textmeshpro", version = "3.0.6" },
+    { name = "com.unity.ui", version = "1.0.0" }
+]
+
+# These map an alias to a specific repository and sub-path for cloning.
+[remotes.core]
+url = "https://github.com/ErencanPelin/Unity-Utils"
+path = "Utils/Core/"
+category = "util"
+
+[remotes.predicates]
+url = "https://github.com/ErencanPelin/Unity-Utils"
+path = "Utils/Predicates/"
+category = "util"
+
+[remotes.blender-exporter]
+url = "https://github.com/ErencanPelin/Unity-Utils"
+path = "Tools/blender_export.py"
+category = "tool"
+
+[remotes.statemachines]
+url = "https://github.com/ErencanPelin/Unity-Utils"
+path = "Modules/StateMachines"
+category = "module"
