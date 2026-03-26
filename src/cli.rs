@@ -1,6 +1,6 @@
 use clap::{Args, Parser, Subcommand, ValueEnum};
 
-use crate::remotes::AliasCategory;
+use crate::remotes::RemoteCategory;
 
 #[derive(Parser)]
 #[command(author, version, about = "Bootstrap Unity projects faster", long_about = None)]
@@ -50,7 +50,7 @@ pub enum Commands {
         /// The alias defined in your remote/local registry
         alias: String,
 
-        /// That path to add the imported scripts to
+        /// The local path to add the imported scripts to
         #[arg(long)]
         path: Option<String>,
     },
@@ -106,9 +106,9 @@ pub enum RemotesActions {
         #[arg(short, long, value_enum)]
         path: String,
 
-        /// Remote repository URL
+        /// Category changes how these assets are imported and their default locations
         #[arg(short, long, value_enum)]
-        category: AliasCategory,
+        category: RemoteCategory,
     },
 
     /// Remove an alias from the local config

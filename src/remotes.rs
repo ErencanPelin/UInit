@@ -4,7 +4,6 @@ use anyhow::bail;
 use clap::ValueEnum;
 use comfy_table::Table;
 use dialoguer::{Confirm, theme::ColorfulTheme};
-use serde::{Deserialize, Serialize};
 
 use crate::{
     alias_registry::{AliasRegistry, RemoteResource},
@@ -12,21 +11,20 @@ use crate::{
     unity_project::UnityProject,
 };
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, ValueEnum)] // Add ValueEnum here
-#[serde(rename_all = "lowercase")]
-pub enum AliasCategory {
+#[derive(Debug, Clone, Copy, PartialEq, ValueEnum)] // Add ValueEnum here
+pub enum RemoteCategory {
     Util,
     Module,
     Tool,
 }
 
 // Keep your Display implementation for the 'list' table
-impl fmt::Display for AliasCategory {
+impl fmt::Display for RemoteCategory {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            AliasCategory::Util => write!(f, "util"),
-            AliasCategory::Module => write!(f, "module"),
-            AliasCategory::Tool => write!(f, "tool"),
+            RemoteCategory::Util => write!(f, "util"),
+            RemoteCategory::Module => write!(f, "module"),
+            RemoteCategory::Tool => write!(f, "tool"),
         }
     }
 }
@@ -60,7 +58,7 @@ pub fn add_alias(
     alias: &String,
     repo: &String,
     path: &String,
-    alias_type: &AliasCategory,
+    alias_type: &RemoteCategory,
     unity_project: &UnityProject,
 ) -> anyhow::Result<()> {
     let mut config: UinitConfig = UinitConfig::load(&unity_project.root)?;
