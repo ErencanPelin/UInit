@@ -1,16 +1,8 @@
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, path::Path};
+use std::path::Path;
 
-use crate::fs;
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct AliasEntry {
-    pub repo: String,
-    pub path: String,
-    #[serde(rename = "type")]
-    pub alias_type: String,
-}
+use crate::{alias_registry::AliasRegistry, fs};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProjectMetadata {
@@ -24,8 +16,7 @@ pub struct ProjectMetadata {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UinitConfig {
     pub project: ProjectMetadata,
-    #[serde(default)]
-    pub aliases: HashMap<String, AliasEntry>,
+    pub custom_aliases: AliasRegistry,
 }
 
 impl UinitConfig {

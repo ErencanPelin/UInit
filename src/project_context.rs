@@ -1,6 +1,9 @@
 use serde::Serialize;
 
-use crate::config::{ProjectMetadata, UinitConfig};
+use crate::{
+    alias_registry::AliasRegistry,
+    config::{ProjectMetadata, UinitConfig},
+};
 
 #[derive(Serialize, Clone)]
 pub struct ProjectContext {
@@ -33,7 +36,7 @@ impl From<&ProjectContext> for UinitConfig {
                 email: ctx.email.clone(),
                 year: ctx.year,
             },
-            aliases: std::collections::HashMap::new(),
+            custom_aliases: AliasRegistry::new(),
         }
     }
 }

@@ -49,10 +49,10 @@ uinit gen MyNewFeature
 
 ### To import predefined tool scripts, utils or feature modules
 ```sh
-# list all aliases and their config
-uinit alias list
+# list all aliases for remotes
+uinit rmote list
 
-# import a tool/feature/util by its alias
+# import a remote tool/feature/util by its alias
 uinit add <ALIAS>
 # e.g.
 uinit add statemachines
@@ -60,18 +60,18 @@ uinit add statemachines
 
 ### To add or customise your own aliases and point them to your own code
 ```sh
-# add custom alias or alias override
-uinit alias add --repo <REPO_HTTP_URL> --path <PATH_TO_MODULE_FROM_REPO_ROOT> --alias-type <UTIL | TOOL | MODULE> <ALIAS_NAME>
+# add a custom alias or alias override for a remote
+uinit remote add --repo <REPO_HTTP_URL> --path <PATH_TO_MODULE_FROM_REPO_ROOT> --category <UTIL | TOOL | MODULE> <ALIAS_NAME>
 # e.g.
-uinit alias add --repo https://github.com/ErencanPelin/Unity-Utils --path /Utils/Core --alias-type util core-utils
+uinit remote add --repo https://github.com/ErencanPelin/Unity-Utils --path /Utils/Core --category util core-utils
 
-# remove custom aliases
-uinit alias rm <ALIAS_NAME>
+# remove a custom alias or alias override for a remote
+uinit remote rm <ALIAS_NAME>
 # e.g.
-uinit alias rm core-utils
+uinit remote rm core-utils
 
-# list available aliases
-uinit alias list
+# list available remote aliases
+uinit remote list
 ```
 
 ### Check general health of Unity Project
