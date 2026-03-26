@@ -74,6 +74,24 @@ uinit remote rm core-utils
 uinit remote list
 ```
 
+### Defining custom dependency bundles in your uinit.toml
+You can add custom dependencies by adding to your `custom_bundles` in your uinit.toml in your project's root.
+```toml
+# define a block like this:
+[custom_aliases.bundles.<ALIAS>]
+dependencies = [
+    { name = "<PACKAGE_NAME>", version = "<VERSION>" },
+    { name = "<PACKAGE_NAME>", version = "<VERSION>" }
+]
+
+# for example:
+[custom_aliases.bundles.mybundle]
+dependencies = [
+    { name = "com.unity.textmeshpro", version = "3.0.6" },
+    { name = "com.unity.ui", version = "1.0.0" }
+]
+```
+
 ### Check general health of Unity Project
 ```sh
 uinit doctor
