@@ -72,14 +72,16 @@ fn main() -> anyhow::Result<()> {
             add::handle_add(alias, &path, &unity_project, &reporter)?;
         }
         Commands::Remote { action } => match action {
-            RemotesActions::List {} => remotes::list_aliases(&unity_project)?,
+            RemotesActions::List {} => remotes::list_aliases(&unity_project, &reporter)?,
             RemotesActions::Add {
                 alias,
                 repo,
                 path,
                 category: alias_type,
-            } => remotes::add_alias(&alias, &repo, &path, &alias_type, &unity_project)?,
-            RemotesActions::Remove { alias } => remotes::remove_alias(&alias, &unity_project)?,
+            } => remotes::add_alias(&alias, &repo, &path, &alias_type, &unity_project, &reporter)?,
+            RemotesActions::Remove { alias } => {
+                remotes::remove_alias(&alias, &unity_project, &reporter)?
+            }
         },
         Commands::Doctor { fix } => handle_doctor(&unity_project, &reporter, *fix)?,
     }

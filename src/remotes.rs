@@ -8,6 +8,7 @@ use dialoguer::{Confirm, theme::ColorfulTheme};
 use crate::{
     alias_registry::{AliasRegistry, RemoteResource},
     config::UinitConfig,
+    reporter::Reporter,
     unity_project::UnityProject,
 };
 
@@ -29,10 +30,13 @@ impl fmt::Display for RemoteCategory {
     }
 }
 
-pub fn list_aliases(unity_project: &UnityProject) -> anyhow::Result<()> {
+pub fn list_aliases(unity_project: &UnityProject, reporter: &Reporter) -> anyhow::Result<()> {
+    reporter.info("Loading uinit.toml file");
     let config: UinitConfig = UinitConfig::load(&unity_project.root)?;
+    reporter.info("Loading default_aliases.toml file");
     let registry = AliasRegistry::load(&config);
 
+    reporter.info("Creating table...");
     let mut table = Table::new();
 
     table.set_header(vec!["Alias", "Category", "Repo Path", "Repo URL"]);
@@ -60,16 +64,19 @@ pub fn add_alias(
     path: &String,
     alias_type: &RemoteCategory,
     unity_project: &UnityProject,
+    reporter: &Reporter,
 ) -> anyhow::Result<()> {
+    reporter.info("Loading uinit.toml file");
     let mut config: UinitConfig = UinitConfig::load(&unity_project.root)?;
 
-    println!("Adding alias {} to uinit.toml...", alias);
+    println!("Adding custom alias '{}' to uinit.toml...", alias);
 
+    reporter.info("Validate alias doesn't not already exist in custom aliases.");
     if config.custom_aliases.remotes.contains_key(alias) {
         let confirmation = Confirm::with_theme(&ColorfulTheme::default())
             .with_prompt(format!(
                 "Alias {} already exists in local uinit.toml config.\n
-                    Do you want to override it?",
+            Do you want to override it?",
                 alias
             ))
             .default(false)
@@ -82,6 +89,7 @@ pub fn add_alias(
         }
     }
 
+    reporter.info("Adding alias to alias registry.");
     // We got past the confirmation
     config.custom_aliases.remotes.insert(
         alias.to_string(),
@@ -92,30 +100,40 @@ pub fn add_alias(
         },
     );
 
+    reporter.info("Saving config and writing uinit.toml to disk.");
     config.save(&unity_project.root)?;
 
-    // TODO: use reporter success
-    println!("Added alias to uinit.toml!");
+    reporter.success(&format!("Added custom alias '{}' to uinit.toml.", alias));
     Ok(())
 }
 
-pub fn remove_alias(alias: &String, unity_project: &UnityProject) -> anyhow::Result<()> {
+pub fn remove_alias(
+    alias: &String,
+    unity_project: &UnityProject,
+    reporter: &Reporter,
+) -> anyhow::Result<()> {
+    reporter.info("Loading uinit.toml file");
     let mut config: UinitConfig = UinitConfig::load(&unity_project.root)?;
 
-    println!("Removing alias {} from uinit.toml...", alias);
+    println!("Removing custom alias '{}' from uinit.toml...", alias);
 
+    reporter.info("Validating custom alias does exist in uinit.toml");
     if !config.custom_aliases.remotes.contains_key(alias) {
         bail!(format!(
             "Alias {} does not exists in local uinit.toml config",
             alias
         ))
     } else {
+        reporter.info("Removing alias from alias registry");
         config.custom_aliases.remotes.remove(&alias.to_string());
     }
 
+    reporter.info("Saving config and writing uinit.toml to disk.");
     config.save(&unity_project.root)?;
 
-    // TODO: use reporter success
-    println!("Removed alias from uinit.toml!");
+    reporter.success(&format!(
+        "Removed custom alias '{}' from uinit.toml.",
+        alias
+    ));
     Ok(())
 }

@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Alias commands are now changed to Remote, because there are now aliases for dependency bundles as well
 - Changed how the commands are structured to make more sense and be easier to type
+### Fixed
+- Alias adding, removing didn't use the same standard verbose or success messages
 
 ## [0.1.1] - 2026-03-22
 ### Changed
