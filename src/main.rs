@@ -3,10 +3,12 @@ use clap::Parser;
 
 mod add;
 mod alias_registry;
+mod ci;
 mod cli;
 mod config;
 mod constants;
 mod doctor;
+mod enums;
 mod feature;
 mod fs;
 mod new_project;
@@ -18,6 +20,7 @@ mod unity_project;
 mod version;
 use cli::{Cli, Commands};
 
+use crate::ci::handle_ci;
 use crate::cli::Integration;
 use crate::project_context::ProjectContext;
 use crate::reporter::Reporter;
@@ -31,7 +34,7 @@ use crate::{
 
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
-    let reporter = Reporter::new(cli.verbose);
+    let reporter = Reporter::new(cli.verbose, cli.no_prompts);
 
     let unity_project = UnityProject::detect()?;
 
@@ -59,7 +62,7 @@ fn main() -> anyhow::Result<()> {
                 let ctx = steam::SteamContext { app_id: *app_id };
                 steam::init_steam(&ctx, &unity_project, &reporter)?;
             }
-            Integration::Ci { host, template } => todo!(),
+            Integration::Ci { host, name } => handle_ci(&host, &name, &unity_project, &reporter)?,
         },
         Commands::Gen {
             name,

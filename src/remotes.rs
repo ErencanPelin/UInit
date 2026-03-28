@@ -1,34 +1,13 @@
-use std::fmt;
-
 use anyhow::bail;
-use clap::ValueEnum;
 use comfy_table::Table;
-use dialoguer::{Confirm, theme::ColorfulTheme};
 
 use crate::{
     alias_registry::{AliasRegistry, RemoteResource},
     config::UinitConfig,
+    enums::RemoteCategory,
     reporter::Reporter,
     unity_project::UnityProject,
 };
-
-#[derive(Debug, Clone, Copy, PartialEq, ValueEnum)] // Add ValueEnum here
-pub enum RemoteCategory {
-    Util,
-    Module,
-    Tool,
-}
-
-// Keep your Display implementation for the 'list' table
-impl fmt::Display for RemoteCategory {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            RemoteCategory::Util => write!(f, "util"),
-            RemoteCategory::Module => write!(f, "module"),
-            RemoteCategory::Tool => write!(f, "tool"),
-        }
-    }
-}
 
 pub fn list_aliases(unity_project: &UnityProject, reporter: &Reporter) -> anyhow::Result<()> {
     reporter.info("Loading uinit.toml file");
@@ -73,17 +52,11 @@ pub fn add_alias(
 
     reporter.info("Validate alias doesn't not already exist in custom aliases.");
     if config.custom_aliases.remotes.contains_key(alias) {
-        let confirmation = Confirm::with_theme(&ColorfulTheme::default())
-            .with_prompt(format!(
-                "Alias {} already exists in local uinit.toml config.\n
+        let confirmation = reporter.prompt(&format!(
+            "Alias {} already exists in local uinit.toml config.\n
             Do you want to override it?",
-                alias
-            ))
-            .default(false)
-            .wait_for_newline(true)
-            .interact()
-            .unwrap_or(false);
-
+            alias
+        ));
         if !confirmation {
             return Ok(());
         }

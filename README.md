@@ -39,6 +39,14 @@ uinit setup steam --app-id <APP_ID>
 uinit setup steam --app-id 480
 ```
 
+### To init a CI/CD workflow
+Currently only Github is supported.
+```sh
+uinit setup ci <CI_HOST> <WORKFLOW_TYPE>
+# e.g.
+uinit setup ci github editor-tests
+```
+
 ### To create a new feature domain
 A feature domain lives inside /Scripts. This command creates sub folders for the feature (runtime, editor, tests) as well as the necessary assembly definition files for those sub folders.
 ```sh
@@ -50,7 +58,7 @@ uinit gen MyNewFeature
 ### To import predefined tool scripts, utils or feature modules
 ```sh
 # list all aliases for remotes
-uinit rmote list
+uinit remote list
 
 # import a remote tool/feature/util by its alias
 uinit add <ALIAS>

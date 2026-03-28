@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-03-28
+### Added
+- You can now create a editor-test.yaml Github workflow using `uinit setup ci github editor-test`
+- Prompts can now be skipped and always respond 'yes'. To do so, use the `--no-prompts` global flag with any command 
+### Changed
+- Prompts are now handled by the reporter, meaning all prompts use the same design and interaction for better UX
+
 ## [0.2.0] - 2026-03-26
 ### Added
 - Custom import paths for remote or imported assets
