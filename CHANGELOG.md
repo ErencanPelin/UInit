@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.1] - 2026-03-28
 ### Added
 - You can now create a editor-test.yaml Github workflow using `uinit setup ci github editor-test`
-- Prompts can now be skipped and always respond 'yes'. To do so, use the `--no-prompts` global flag with any command 
+- Prompts can now be skipped and always respond 'yes'. To do so, use the `--no-prompts` global flag with any command
+- `uinit doctor` now also validates dependencies defined in your project templates and can auto fix any missing dependencies
 ### Changed
 - Prompts are now handled by the reporter, meaning all prompts use the same design and interaction for better UX
 

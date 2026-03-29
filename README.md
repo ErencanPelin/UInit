@@ -12,6 +12,8 @@ The aim of this project is to initialise Unity projects with the core folder str
 - Create LICENSE files automatically using Jinja2 templating. Currently just works for the BSD 3-clause license.
 - Initialise Steamworks dependencies and steam-appid.txt in one command
 - Create whole feature domains with runtime, editor, test assemblies with a single command
+- Create CI workflows from templates
+- Validate project structure against defined templates
 - Import default or custom modules into your project with a single command. Imports modules as part of your project, not just a package
 
 ## Developing

@@ -1,5 +1,6 @@
 use anyhow::Ok;
 
+use crate::new_project::{add_package, get_project_packages};
 use crate::project_context::ProjectContext;
 use crate::reporter::Reporter;
 use crate::{config::UinitConfig, constants::PROJECT_TEMPLATES, unity_project::UnityProject};
@@ -98,7 +99,6 @@ fn validate_project_structure(
             if !full_path.is_file() {
                 if apply_fix {
                     std::fs::write(&full_path, "")?; // Or render a template
-                    reporter.info(&format!("Creating: {:?}.", full_path));
                     result.push(format!("  ✅ Created missing file: {}", relative_path));
                 } else {
                     result.push(format!("  ⚠️  Missing file: {}", relative_path));
@@ -107,7 +107,20 @@ fn validate_project_structure(
         }
     }
 
-    // TODO: check to see if dependencies match template
+    // Check to see if dependencies match template
+    reporter.info("Validating project contains dependencies from template.");
+    let project_deps = get_project_packages(&unity_project, &reporter)?;
+    let template_deps = _dependencies.to_vec();
+
+    for dep in template_deps {
+        if !project_deps.contains_key(dep.0) {
+            if apply_fix {
+                add_package(&unity_project, &reporter, dep.0, dep.1)?;
+            } else {
+                result.push(format!("  ⚠️  Missing package dependency: {}", dep.0));
+            }
+        }
+    }
 
     Ok(result)
 }
