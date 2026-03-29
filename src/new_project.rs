@@ -199,3 +199,29 @@ pub fn add_package(
     }
     Ok(())
 }
+
+pub fn get_project_packages(
+    unity_project: &UnityProject,
+    reporter: &Reporter,
+) -> anyhow::Result<HashMap<String, String>> {
+    reporter.info("Reading packages manifest.json.");
+    let path = unity_project.packages_dir().join("manifest.json");
+
+    let manifest: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&path)?)
+        .with_context(|| "Failed to parse manifest.json")?;
+
+    reporter.info("Getting dependencies.");
+    let deps = manifest
+        .get("dependencies")
+        .and_then(|d| d.as_object())
+        .ok_or_else(|| anyhow::anyhow!("manifest.json missing 'dependencies' object"))?;
+
+    let mut result = HashMap::new();
+    for (k, v) in deps {
+        if let Some(version) = v.as_str() {
+            result.insert(k.clone(), version.to_string());
+        }
+    }
+
+    Ok(result)
+}

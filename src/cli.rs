@@ -1,6 +1,6 @@
-use clap::{Args, Parser, Subcommand, ValueEnum};
+use clap::{Args, Parser, Subcommand};
 
-use crate::remotes::RemoteCategory;
+use crate::enums::{CiHost, RemoteCategory, WorkflowType};
 
 #[derive(Parser)]
 #[command(author, version, about = "Bootstrap Unity projects faster", long_about = None)]
@@ -11,6 +11,10 @@ pub struct Cli {
     /// Run in verbose mode
     #[arg(short, long, global = true, default_value_t = false)]
     pub verbose: bool,
+
+    /// Always respond 'yes' to any prompts that might appear
+    #[arg(short, long, global = true, default_value_t = false)]
+    pub no_prompts: bool,
 }
 
 #[derive(Subcommand)]
@@ -83,8 +87,8 @@ pub enum Integration {
     Ci {
         #[arg(value_enum)]
         host: CiHost,
-        /// The specific workflow template alias
-        template: String,
+        /// The name of the workflow you want to create. Use --help to see available options.
+        name: WorkflowType,
     },
 }
 
@@ -117,9 +121,4 @@ pub enum RemotesActions {
         /// Alias to be removed
         alias: String,
     },
-}
-
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
-pub enum CiHost {
-    Github,
 }

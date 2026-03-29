@@ -1,3 +1,5 @@
+use crate::enums::{CiHost, WorkflowType};
+
 // These values are used as defaults for project creation if their values are not provided via CLI arguments.
 pub const DEFAULT_COMPANY: &str = "DefaultCompany";
 pub const DEFAULT_EMAIL: &str = "";
@@ -67,3 +69,12 @@ pub const STEAMWORKS_PACKAGE: (&str, &str) = (
     "com.rlabrecque.steamworks.net",
     "https://github.com/rlabrecque/Steamworks.NET.git?path=/com.rlabrecque.steamworks.net#2024.8.0",
 );
+
+pub const WORKFLOW_TEMPATES: &[(CiHost, &[(WorkflowType, &str, &str)])] = &[(
+    CiHost::Github,
+    &[(
+        WorkflowType::EditorTests,
+        include_str!("./templates/github_workflows/editor_test.yaml"),
+        "editor-test.yaml",
+    )],
+)];

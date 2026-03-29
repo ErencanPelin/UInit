@@ -12,6 +12,8 @@ The aim of this project is to initialise Unity projects with the core folder str
 - Create LICENSE files automatically using Jinja2 templating. Currently just works for the BSD 3-clause license.
 - Initialise Steamworks dependencies and steam-appid.txt in one command
 - Create whole feature domains with runtime, editor, test assemblies with a single command
+- Create CI workflows from templates
+- Validate project structure against defined templates
 - Import default or custom modules into your project with a single command. Imports modules as part of your project, not just a package
 
 ## Developing
@@ -39,6 +41,14 @@ uinit setup steam --app-id <APP_ID>
 uinit setup steam --app-id 480
 ```
 
+### To init a CI/CD workflow
+Currently only Github is supported.
+```sh
+uinit setup ci <CI_HOST> <WORKFLOW_TYPE>
+# e.g.
+uinit setup ci github editor-tests
+```
+
 ### To create a new feature domain
 A feature domain lives inside /Scripts. This command creates sub folders for the feature (runtime, editor, tests) as well as the necessary assembly definition files for those sub folders.
 ```sh
@@ -50,7 +60,7 @@ uinit gen MyNewFeature
 ### To import predefined tool scripts, utils or feature modules
 ```sh
 # list all aliases for remotes
-uinit rmote list
+uinit remote list
 
 # import a remote tool/feature/util by its alias
 uinit add <ALIAS>

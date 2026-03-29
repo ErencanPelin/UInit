@@ -1,5 +1,4 @@
 use anyhow::Context;
-use dialoguer::{Confirm, theme::ColorfulTheme};
 use minijinja::Environment;
 use std::path::PathBuf;
 use std::{path::Path, process::Command};
@@ -28,17 +27,12 @@ pub fn handle_add(
 
     match alias_registry.resolve_alias(alias) {
         Some(ResolvedResource::Bundle(deps)) => {
-            let confirmation = Confirm::with_theme(&ColorfulTheme::default())
-                .with_prompt(format!(
-                    "This will add {} packages from the '{}' bundle.\n
+            let confirmation = reporter.prompt(&format!(
+                "This will add {} packages from the '{}' bundle.\n
                     Are you sure?",
-                    deps.len(),
-                    alias
-                ))
-                .default(false)
-                .wait_for_newline(true)
-                .interact()
-                .unwrap_or(false);
+                deps.len(),
+                alias
+            ));
 
             if !confirmation {
                 return Ok(());
@@ -51,16 +45,11 @@ pub fn handle_add(
             reporter.success(&format!("Successfully added {} packages.", deps.len()));
         }
         Some(ResolvedResource::Remote(resource)) => {
-            let confirmation = Confirm::with_theme(&ColorfulTheme::default())
-                .with_prompt(format!(
-                    "This will add all files and folders in {} from the repo {}.\n
+            let confirmation = reporter.prompt(&format!(
+                "This will add all files and folders in {} from the repo {}.\n
         Are you sure?",
-                    resource.path, resource.url
-                ))
-                .default(false)
-                .wait_for_newline(true)
-                .interact()
-                .unwrap_or(false);
+                resource.path, resource.url
+            ));
 
             if !confirmation {
                 return Ok(());
