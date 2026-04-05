@@ -1,7 +1,6 @@
 use chrono::Datelike;
 use clap::Parser;
 
-mod add;
 mod alias_registry;
 mod ci;
 mod cli;
@@ -11,6 +10,7 @@ mod doctor;
 mod enums;
 mod feature;
 mod fs;
+mod import;
 mod new_project;
 mod project_context;
 mod remotes;
@@ -18,17 +18,14 @@ mod reporter;
 mod steam;
 mod unity_project;
 mod version;
-use cli::{Cli, Commands};
-
-use crate::ci::handle_ci;
-use crate::cli::Integration;
-use crate::project_context::ProjectContext;
-use crate::reporter::Reporter;
 use crate::{
-    cli::RemotesActions,
+    ci::handle_ci,
+    cli::{Cli, Commands, Integration, RemotesActions},
     constants::{DEFAULT_COMPANY, DEFAULT_EMAIL},
     doctor::handle_doctor,
     new_project::init_project,
+    project_context::ProjectContext,
+    reporter::Reporter,
     unity_project::UnityProject,
 };
 
@@ -71,8 +68,8 @@ fn main() -> anyhow::Result<()> {
         } => {
             feature::init_feature(name, *no_editor, *no_tests, &unity_project, &reporter)?;
         }
-        Commands::Add { alias, path } => {
-            add::handle_add(alias, &path, &unity_project, &reporter)?;
+        Commands::Import { alias, path } => {
+            import::handle_import(alias, &path, &unity_project, &reporter)?;
         }
         Commands::Remote { action } => match action {
             RemotesActions::List {} => remotes::list_aliases(&unity_project, &reporter)?,

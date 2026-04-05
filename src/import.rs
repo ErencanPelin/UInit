@@ -3,19 +3,19 @@ use minijinja::Environment;
 use std::path::PathBuf;
 use std::{path::Path, process::Command};
 
-use crate::alias_registry::{AliasRegistry, RemoteResource, ResolvedResource};
-use crate::new_project::add_package;
-use crate::project_context::ProjectContext;
-use crate::reporter::Reporter;
 use crate::{
+    alias_registry::{AliasRegistry, RemoteResource, ResolvedResource},
     config::UinitConfig,
     constants::{self},
     feature::create_assembly_definition,
     fs,
+    new_project::add_package,
+    project_context::ProjectContext,
+    reporter::Reporter,
     unity_project::UnityProject,
 };
 
-pub fn handle_add(
+pub fn handle_import(
     alias: &str,
     path: &Option<String>,
     unity_project: &UnityProject,

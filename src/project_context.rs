@@ -1,11 +1,8 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-use crate::{
-    alias_registry::AliasRegistry,
-    config::{ProjectMetadata, UinitConfig},
-};
+use crate::{alias_registry::AliasRegistry, config::UinitConfig};
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Deserialize, Debug)]
 pub struct ProjectContext {
     pub template_alias: String,
     pub project_name: String,
@@ -29,7 +26,7 @@ impl ProjectContext {
 impl From<&ProjectContext> for UinitConfig {
     fn from(ctx: &ProjectContext) -> Self {
         Self {
-            project: ProjectMetadata {
+            project: ProjectContext {
                 project_name: ctx.project_name.clone(),
                 template_alias: ctx.template_alias.clone(),
                 company: ctx.company.clone(),

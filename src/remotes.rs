@@ -4,7 +4,7 @@ use comfy_table::Table;
 use crate::{
     alias_registry::{AliasRegistry, RemoteResource},
     config::UinitConfig,
-    enums::RemoteCategory,
+    enums::AssetCategory,
     reporter::Reporter,
     unity_project::UnityProject,
 };
@@ -41,7 +41,7 @@ pub fn add_alias(
     alias: &String,
     repo: &String,
     path: &String,
-    alias_type: &RemoteCategory,
+    alias_type: &AssetCategory,
     unity_project: &UnityProject,
     reporter: &Reporter,
 ) -> anyhow::Result<()> {

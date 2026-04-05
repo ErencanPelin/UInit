@@ -29,19 +29,19 @@ impl fmt::Display for WorkflowType {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, ValueEnum)] // Add ValueEnum here
-pub enum RemoteCategory {
+pub enum AssetCategory {
     Util,
     Module,
     Tool,
 }
 
 // Keep your Display implementation for the 'list' table
-impl fmt::Display for RemoteCategory {
+impl fmt::Display for AssetCategory {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            RemoteCategory::Util => write!(f, "util"),
-            RemoteCategory::Module => write!(f, "module"),
-            RemoteCategory::Tool => write!(f, "tool"),
+            AssetCategory::Util => write!(f, "util"),
+            AssetCategory::Module => write!(f, "module"),
+            AssetCategory::Tool => write!(f, "tool"),
         }
     }
 }

@@ -1,6 +1,6 @@
 use clap::{Args, Parser, Subcommand};
 
-use crate::enums::{CiHost, RemoteCategory, WorkflowType};
+use crate::enums::{AssetCategory, CiHost, WorkflowType};
 
 #[derive(Parser)]
 #[command(author, version, about = "Bootstrap Unity projects faster", long_about = None)]
@@ -50,7 +50,7 @@ pub enum Commands {
         no_tests: bool,
     },
     /// Import a remote utility or script via alias
-    Add {
+    Import {
         /// The alias defined in your remote/local registry
         alias: String,
 
@@ -112,7 +112,7 @@ pub enum RemotesActions {
 
         /// Category changes how these assets are imported and their default locations
         #[arg(short, long, value_enum)]
-        category: RemoteCategory,
+        category: AssetCategory,
     },
 
     /// Remove an alias from the local config

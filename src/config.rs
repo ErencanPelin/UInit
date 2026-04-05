@@ -2,20 +2,11 @@ use anyhow::Context;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
-use crate::{alias_registry::AliasRegistry, fs};
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ProjectMetadata {
-    pub project_name: String,
-    pub template_alias: String,
-    pub company: String,
-    pub email: String,
-    pub year: i32,
-}
+use crate::{alias_registry::AliasRegistry, fs, project_context::ProjectContext};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UinitConfig {
-    pub project: ProjectMetadata,
+    pub project: ProjectContext,
     pub custom_aliases: AliasRegistry,
 }
 

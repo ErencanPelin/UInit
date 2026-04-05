@@ -63,9 +63,9 @@ uinit gen MyNewFeature
 uinit remote list
 
 # import a remote tool/feature/util by its alias
-uinit add <ALIAS>
+uinit import <ALIAS>
 # e.g.
-uinit add statemachines
+uinit import statemachines
 ```
 
 ### To add or customise your own aliases and point them to your own code

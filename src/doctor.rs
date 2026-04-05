@@ -1,9 +1,13 @@
 use anyhow::Ok;
 
-use crate::new_project::{add_package, get_project_packages};
-use crate::project_context::ProjectContext;
-use crate::reporter::Reporter;
-use crate::{config::UinitConfig, constants::PROJECT_TEMPLATES, unity_project::UnityProject};
+use crate::{
+    config::UinitConfig,
+    constants::PROJECT_TEMPLATES,
+    new_project::{add_package, get_project_packages},
+    project_context::ProjectContext,
+    reporter::Reporter,
+    unity_project::UnityProject,
+};
 
 pub fn handle_doctor(
     unity_project: &UnityProject,

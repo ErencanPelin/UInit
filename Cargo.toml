@@ -1,6 +1,7 @@
 [package]
 name = "uinit"
-version = "0.2.1"
+version = "1.0.0"
+authors = ["Erencan Pelin <epelin.business@gmail.com>"]
 edition = "2024"
 repository = "https://github.com/ErencanPelin/UInit"
 
