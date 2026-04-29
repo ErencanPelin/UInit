@@ -22,7 +22,7 @@ See [DEVELOPING.md](/DEVELOPING.md)
 ## Getting Started
 1. Install the latest version using
 ```bash
-curl --proto '=https' --tlsv1.2 -LsSf https://github.com/ErencanPelin/UInit/releases/download/v0.1.1/uinit-installer.sh | sh
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/ErencanPelin/UInit/releases/download/v1.0.0/uinit-installer.sh | sh
 ```
 2. Run `uinit --help` in your terminal to get started.
 3. Update your current version with `uinit-update`
