@@ -50,16 +50,16 @@ impl fmt::Display for AssetCategory {
 
 #[derive(ValueEnum, Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
-pub enum ProjectTemplate {
+pub enum ProjectType {
     Game,
     Package,
 }
 
-impl fmt::Display for ProjectTemplate {
+impl fmt::Display for ProjectType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            ProjectTemplate::Game => write!(f, "game"),
-            ProjectTemplate::Package => write!(f, "package"),
+            ProjectType::Game => write!(f, "game"),
+            ProjectType::Package => write!(f, "package"),
         }
     }
 }

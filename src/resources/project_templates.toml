@@ -1,0 +1,38 @@
+[templates.game]
+project_type = "game"
+paths = [
+    "Assets/{}/Animations/",
+    "Assets/{}/Audio/",
+    "Assets/{}/Materials/",
+    "Assets/{}/Meshes/",
+    "Assets/{}/Prefabs/",
+    "Assets/{}/Scenes/",
+    "Assets/{}/Scripts/",
+    "Assets/{}/Scripts/Core/",
+    "Assets/{}/Scripts/Common/",
+    "Assets/{}/Shaders/",
+    "Assets/{}/Textures/",
+    "Assets/../.gitignore",
+]
+dependencies = [{ name = "com.unity.nuget.newtonsoft-json", version = "3.2.2" }]
+
+[templates.package]
+project_type = "package"
+paths = [
+    "Assets/{}/Animations/",
+    "Assets/{}/Materials/",
+    "Assets/{}/Meshes/",
+    "Assets/{}/Prefabs/",
+    "Assets/{}/Scenes/",
+    "Assets/{}/Scripts/",
+    "Assets/{}/Scripts/Core/",
+    "Assets/{}/Scripts/Common/",
+    "Assets/{}/Samples/",
+    "Assets/{}/Textures/",
+    "Assets/{}/README.md",
+    "Assets/{}/CHANGELOG.md",
+    "Assets/{}/LICENSE",
+    "Assets/{}/package.json",
+    "Assets/../.gitignore",
+]
+dependencies = [{ name = "com.unity.nuget.newtonsoft-json", version = "3.2.2" }]

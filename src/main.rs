@@ -13,6 +13,7 @@ mod fs;
 mod import;
 mod new_project;
 mod project_context;
+mod project_template_registry;
 mod remotes;
 mod reporter;
 mod steam;
@@ -25,6 +26,7 @@ use crate::{
     doctor::handle_doctor,
     new_project::init_project,
     project_context::ProjectContext,
+    project_template_registry::ProjectTemplateRegistry,
     reporter::Reporter,
     unity_project::UnityProject,
 };
@@ -35,6 +37,7 @@ fn main() -> anyhow::Result<()> {
 
     let unity_project = UnityProject::detect()?;
 
+    let project_template_registry = ProjectTemplateRegistry::load();
     match &cli.command {
         Commands::Init {
             name,
@@ -43,7 +46,7 @@ fn main() -> anyhow::Result<()> {
             email,
         } => {
             let ctx = ProjectContext {
-                project_template: template.clone(),
+                project_type: template.clone(),
                 project_name: name.to_string(),
                 // Clone the string if it exists, otherwise use the default
                 company: company
@@ -52,7 +55,7 @@ fn main() -> anyhow::Result<()> {
                 email: email.clone().unwrap_or_else(|| DEFAULT_EMAIL.to_string()),
                 year: chrono::Utc::now().year(),
             };
-            init_project(&ctx, &unity_project, &reporter)?;
+            init_project(&ctx, &unity_project, &reporter, &project_template_registry)?;
         }
         Commands::Setup(args) => match &args.integration {
             Integration::Steam { app_id } => {
@@ -83,7 +86,9 @@ fn main() -> anyhow::Result<()> {
                 remotes::remove_alias(&alias, &unity_project, &reporter)?
             }
         },
-        Commands::Doctor { fix } => handle_doctor(&unity_project, &reporter, *fix)?,
+        Commands::Doctor { fix } => {
+            handle_doctor(&unity_project, &reporter, *fix, &project_template_registry)?
+        }
     }
 
     version::check_for_updates(&reporter)?;

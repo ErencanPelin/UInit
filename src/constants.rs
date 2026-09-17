@@ -1,55 +1,8 @@
-use crate::enums::{CiHost, ProjectTemplate, WorkflowType};
+use crate::enums::{CiHost, WorkflowType};
 
 // These values are used as defaults for project creation if their values are not provided via CLI arguments.
 pub const DEFAULT_COMPANY: &str = "DefaultCompany";
 pub const DEFAULT_EMAIL: &str = "";
-
-/*
- * Template paths for project creation. The {} in the paths will be replaced with the project name.
- * End the line with a / to create a directory, otherwise a file will be created.
-*/
-pub const PROJECT_TEMPLATES: &[(ProjectTemplate, &[&str], &[(&str, &str)])] = &[
-    (
-        ProjectTemplate::Game, // alias to create the template
-        &[
-            // folder structure
-            "Assets/{}/Animations/",
-            "Assets/{}/Audio/",
-            "Assets/{}/Materials/",
-            "Assets/{}/Meshes/",
-            "Assets/{}/Prefabs/",
-            "Assets/{}/Scenes/",
-            "Assets/{}/Scripts/",
-            "Assets/{}/Scripts/Core/",
-            "Assets/{}/Scripts/Common/",
-            "Assets/{}/Shaders/",
-            "Assets/{}/Textures/",
-            "Assets/../.gitignore",
-        ],
-        &[("com.unity.nuget.newtonsoft-json", "3.2.2")], // dependencies
-    ),
-    (
-        ProjectTemplate::Package,
-        &[
-            "Assets/{}/Animations/",
-            "Assets/{}/Materials/",
-            "Assets/{}/Meshes/",
-            "Assets/{}/Prefabs/",
-            "Assets/{}/Scenes/",
-            "Assets/{}/Scripts/",
-            "Assets/{}/Scripts/Core/",
-            "Assets/{}/Scripts/Common/",
-            "Assets/{}/Samples/",
-            "Assets/{}/Textures/",
-            "Assets/{}/README.md",
-            "Assets/{}/CHANGELOG.md",
-            "Assets/{}/LICENSE",
-            "Assets/{}/package.json",
-            "Assets/../.gitignore",
-        ],
-        &[("com.unity.nuget.newtonsoft-json", "3.2.2")], // dependencies
-    ),
-];
 
 // Template files contents for file creation and jinja rendering.
 pub const PACKAGE_JINJA: &str = include_str!("./resources/templates/package.json.jinja2");
