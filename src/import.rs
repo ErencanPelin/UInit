@@ -3,6 +3,7 @@ use minijinja::Environment;
 use std::path::PathBuf;
 use std::{path::Path, process::Command};
 
+use crate::enums::AssetCategory;
 use crate::{
     alias_registry::{AliasRegistry, RemoteResource, ResolvedResource},
     config::UinitConfig,
@@ -60,10 +61,14 @@ pub fn handle_import(
                 alias, resource.url, resource.path
             );
 
-            match resource.category.to_lowercase().as_str() {
-                "util" => import_util(&path, &ctx, &unity_project, &reporter, &resource)?,
-                "module" => import_module(&path, &ctx, &unity_project, &reporter, &resource)?,
-                "tool" => import_tool(&path, &unity_project, &reporter, &resource)?,
+            match resource.category {
+                AssetCategory::Util => {
+                    import_util(&path, &ctx, &unity_project, &reporter, &resource)?
+                }
+                AssetCategory::Module => {
+                    import_module(&path, &ctx, &unity_project, &reporter, &resource)?
+                }
+                AssetCategory::Tool => import_tool(&path, &unity_project, &reporter, &resource)?,
                 _ => {}
             }
 

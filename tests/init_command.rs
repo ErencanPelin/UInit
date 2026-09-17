@@ -20,6 +20,7 @@ fn init_game_creates_expected_folder_structure() {
             .join("Assets/MyGameProject/Animations")
             .is_dir()
     );
+    assert!(project.path().join(".gitignore").is_file());
 }
 
 #[test]
@@ -45,4 +46,5 @@ fn init_package_creates_expected_folder_structure() {
             .join("Assets/MyPackageProject/Animations")
             .is_dir()
     );
+    assert!(project.path().join(".gitignore").is_file());
 }

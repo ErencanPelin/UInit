@@ -1,4 +1,4 @@
-use crate::enums::{CiHost, WorkflowType};
+use crate::enums::{CiHost, ProjectTemplate, WorkflowType};
 
 // These values are used as defaults for project creation if their values are not provided via CLI arguments.
 pub const DEFAULT_COMPANY: &str = "DefaultCompany";
@@ -8,9 +8,9 @@ pub const DEFAULT_EMAIL: &str = "";
  * Template paths for project creation. The {} in the paths will be replaced with the project name.
  * End the line with a / to create a directory, otherwise a file will be created.
 */
-pub const PROJECT_TEMPLATES: &[(&str, &[&str], &[(&str, &str)])] = &[
+pub const PROJECT_TEMPLATES: &[(ProjectTemplate, &[&str], &[(&str, &str)])] = &[
     (
-        "game", // alias to create the template
+        ProjectTemplate::Game, // alias to create the template
         &[
             // folder structure
             "Assets/{}/Animations/",
@@ -29,7 +29,7 @@ pub const PROJECT_TEMPLATES: &[(&str, &[&str], &[(&str, &str)])] = &[
         &[("com.unity.nuget.newtonsoft-json", "3.2.2")], // dependencies
     ),
     (
-        "package",
+        ProjectTemplate::Package,
         &[
             "Assets/{}/Animations/",
             "Assets/{}/Materials/",

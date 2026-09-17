@@ -1,7 +1,8 @@
-use std::collections::HashMap;
-
 use anyhow::{Context, Ok};
+use clap::ValueEnum;
 use minijinja::Environment;
+use serde::{Deserialize, Serialize};
+use std::{collections::HashMap, fmt};
 
 use crate::{
     config::UinitConfig,
@@ -22,11 +23,11 @@ pub fn init_project(
 ) -> anyhow::Result<()> {
     println!(
         "🚀 Uinit: Initialising '{}' with '{}' template...",
-        ctx.project_name, ctx.template_alias
+        ctx.project_name, ctx.project_template
     );
 
     create_from_template(ctx, unity_project, reporter)
-        .with_context(|| format!("Failed to apply template: {}", ctx.template_alias))?;
+        .with_context(|| format!("Failed to apply template: {}", ctx.project_template))?;
 
     modify_project_settings(ctx, unity_project, reporter)
         .with_context(|| "Failed to update Unity ProjectSettings.asset.")?;
@@ -51,8 +52,8 @@ fn create_from_template(
     let env = Environment::new();
     let template = PROJECT_TEMPLATES
         .iter()
-        .find(|(name, _, _)| *name == ctx.template_alias)
-        .ok_or_else(|| anyhow::anyhow!("Template '{}' not found", ctx.template_alias))?;
+        .find(|(project_template, _, _)| *project_template == ctx.project_template)
+        .ok_or_else(|| anyhow::anyhow!("Template '{}' not found", ctx.project_template))?;
 
     let (_, paths, deps) = template;
 

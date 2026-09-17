@@ -1,6 +1,7 @@
 use std::fmt;
 
 use clap::ValueEnum;
+use serde::{Deserialize, Serialize};
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 pub enum CiHost {
@@ -28,7 +29,8 @@ impl fmt::Display for WorkflowType {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, ValueEnum)] // Add ValueEnum here
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum AssetCategory {
     Util,
     Module,
@@ -42,6 +44,22 @@ impl fmt::Display for AssetCategory {
             AssetCategory::Util => write!(f, "util"),
             AssetCategory::Module => write!(f, "module"),
             AssetCategory::Tool => write!(f, "tool"),
+        }
+    }
+}
+
+#[derive(ValueEnum, Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum ProjectTemplate {
+    Game,
+    Package,
+}
+
+impl fmt::Display for ProjectTemplate {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ProjectTemplate::Game => write!(f, "game"),
+            ProjectTemplate::Package => write!(f, "package"),
         }
     }
 }
