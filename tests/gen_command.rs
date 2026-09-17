@@ -1,7 +1,6 @@
 mod common;
 use assert_cmd::Command;
 use common::FakeUnityProject;
-use tempfile::tempdir;
 
 #[test]
 fn gen_creates_expected_folder_structure() {

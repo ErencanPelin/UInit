@@ -69,7 +69,6 @@ pub fn handle_import(
                     import_module(&path, &ctx, &unity_project, &reporter, &resource)?
                 }
                 AssetCategory::Tool => import_tool(&path, &unity_project, &reporter, &resource)?,
-                _ => {}
             }
 
             reporter.success(&format!(
