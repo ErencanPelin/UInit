@@ -1,6 +1,6 @@
 use clap::{Args, Parser, Subcommand};
 
-use crate::enums::{AssetCategory, CiHost, ProjectTemplate, WorkflowType};
+use crate::enums::{AssetCategory, CiHost, ProjectType, WorkflowType};
 
 #[derive(Parser)]
 #[command(author, version, about = "Bootstrap Unity projects faster", long_about = None)]
@@ -26,7 +26,7 @@ pub enum Commands {
 
         /// Project type
         #[arg(short, long, value_enum)]
-        template: ProjectTemplate,
+        template: ProjectType,
 
         /// Project owner company name (used for namespaces and package names). Use your own name if you're not a company
         #[arg(short, long)]

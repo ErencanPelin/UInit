@@ -1,10 +1,10 @@
-use anyhow::Ok;
+use anyhow::{Context, Ok};
 
 use crate::{
     config::UinitConfig,
-    constants::PROJECT_TEMPLATES,
     new_project::{add_package, get_project_packages},
     project_context::ProjectContext,
+    project_template_registry::ProjectTemplateRegistry,
     reporter::Reporter,
     unity_project::UnityProject,
 };
@@ -13,6 +13,7 @@ pub fn handle_doctor(
     unity_project: &UnityProject,
     reporter: &Reporter,
     fix: bool,
+    project_template_registry: &ProjectTemplateRegistry,
 ) -> anyhow::Result<()> {
     println!(
         "🚀 Uinit: Running doctor with auto-fix set to '{}' ...",
@@ -32,7 +33,13 @@ pub fn handle_doctor(
         ),
         (
             "Project Structure",
-            validate_project_structure(&ctx, unity_project, reporter, fix)?,
+            validate_project_structure(
+                &ctx,
+                unity_project,
+                reporter,
+                fix,
+                project_template_registry,
+            )?,
         ),
     ];
 
@@ -68,20 +75,23 @@ fn validate_project_structure(
     unity_project: &UnityProject,
     reporter: &Reporter,
     apply_fix: bool,
+    project_template_registry: &ProjectTemplateRegistry,
 ) -> anyhow::Result<Vec<String>> {
     let mut result = Vec::new();
 
     reporter.info("Checking current template from uinit.toml");
-    let template = PROJECT_TEMPLATES
-        .iter()
-        .find(|(project_template, _, _)| *project_template == ctx.project_template)
-        .ok_or_else(|| anyhow::anyhow!("Unknown template alias: {}", ctx.project_template))?;
-
-    let (_, paths, _dependencies) = template;
+    let template = project_template_registry
+        .get(&ctx.project_type)
+        .with_context(|| {
+            format!(
+                "Failed to find template for project type: {}",
+                ctx.project_type
+            )
+        })?;
 
     // 2. Trawl through paths
     reporter.info("Checking to make sure all paths from template exist.");
-    for path_template in *paths {
+    for path_template in &template.paths {
         // Replace {} with project name (e.g., "Assets/MyGame/Scripts/")
         let relative_path = path_template.replace("{}", &ctx.project_name);
         let full_path = unity_project.root.join(&relative_path);
@@ -114,14 +124,14 @@ fn validate_project_structure(
     // Check to see if dependencies match template
     reporter.info("Validating project contains dependencies from template.");
     let project_deps = get_project_packages(&unity_project, &reporter)?;
-    let template_deps = _dependencies.to_vec();
+    let template_deps = &template.dependencies;
 
     for dep in template_deps {
-        if !project_deps.contains_key(dep.0) {
+        if !project_deps.contains_key(&dep.name) {
             if apply_fix {
-                add_package(&unity_project, &reporter, dep.0, dep.1)?;
+                add_package(&unity_project, &reporter, &dep.name, &dep.version)?;
             } else {
-                result.push(format!("  ⚠️  Missing package dependency: {}", dep.0));
+                result.push(format!("  ⚠️  Missing package dependency: {}", dep.name));
             }
         }
     }

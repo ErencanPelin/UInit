@@ -1,17 +1,15 @@
 use anyhow::{Context, Ok};
-use clap::ValueEnum;
 use minijinja::Environment;
-use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, fmt};
+use std::collections::HashMap;
 
 use crate::{
     config::UinitConfig,
     constants::{
-        CHANGELOG_TEMPLATE, GITIGNORE_TEMPLATE, LICENSE_JINJA, PACKAGE_JINJA, PROJECT_TEMPLATES,
-        README_JINJA,
+        CHANGELOG_TEMPLATE, GITIGNORE_TEMPLATE, LICENSE_JINJA, PACKAGE_JINJA, README_JINJA,
     },
     fs,
     project_context::ProjectContext,
+    project_template_registry::ProjectTemplateRegistry,
     reporter::Reporter,
     unity_project::UnityProject,
 };
@@ -20,14 +18,15 @@ pub fn init_project(
     ctx: &ProjectContext,
     unity_project: &UnityProject,
     reporter: &Reporter,
+    project_template_registry: &ProjectTemplateRegistry,
 ) -> anyhow::Result<()> {
     println!(
         "🚀 Uinit: Initialising '{}' with '{}' template...",
-        ctx.project_name, ctx.project_template
+        ctx.project_name, ctx.project_type
     );
 
-    create_from_template(ctx, unity_project, reporter)
-        .with_context(|| format!("Failed to apply template: {}", ctx.project_template))?;
+    create_from_template(ctx, unity_project, reporter, project_template_registry)
+        .with_context(|| format!("Failed to apply template: {}", ctx.project_type))?;
 
     modify_project_settings(ctx, unity_project, reporter)
         .with_context(|| "Failed to update Unity ProjectSettings.asset.")?;
@@ -47,15 +46,18 @@ fn create_from_template(
     ctx: &ProjectContext,
     unity_project: &UnityProject,
     reporter: &Reporter,
+    project_template_registry: &ProjectTemplateRegistry,
 ) -> anyhow::Result<()> {
     reporter.info("Creating project from template.");
     let env = Environment::new();
-    let template = PROJECT_TEMPLATES
-        .iter()
-        .find(|(project_template, _, _)| *project_template == ctx.project_template)
-        .ok_or_else(|| anyhow::anyhow!("Template '{}' not found", ctx.project_template))?;
-
-    let (_, paths, deps) = template;
+    let template = project_template_registry
+        .get(&ctx.project_type)
+        .with_context(|| {
+            format!(
+                "Failed to find template for project type: {}",
+                ctx.project_type
+            )
+        })?;
 
     // Define which files get which templates
     // TODO: move to constants.rs
@@ -68,7 +70,7 @@ fn create_from_template(
     ]);
 
     // create each defined file and path
-    for &raw_path in *paths {
+    for raw_path in &template.paths {
         let template_path = raw_path.replace("{}", &ctx.project_name);
         let full_path = unity_project.root.join(&template_path);
         let relative_path: String = unity_project.rel_path(&full_path);
@@ -108,8 +110,13 @@ fn create_from_template(
 
     // Dependencies
     // TODO: split this into its own function
-    for (pkg, ver) in *deps {
-        add_package(unity_project, reporter, pkg, ver)?;
+    for dependency in &template.dependencies {
+        add_package(
+            unity_project,
+            reporter,
+            &dependency.name,
+            &dependency.version,
+        )?;
     }
 
     Ok(())

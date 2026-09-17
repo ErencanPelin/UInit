@@ -3,12 +3,6 @@ use std::collections::HashMap;
 
 use crate::{config::UinitConfig, enums::AssetCategory};
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct AliasRegistry {
-    pub bundles: HashMap<String, Bundle>,
-    pub remotes: HashMap<String, RemoteResource>,
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Bundle {
     pub dependencies: Vec<Dependency>,
@@ -34,6 +28,12 @@ impl Default for AliasRegistry {
             remotes: HashMap::new(),
         }
     }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct AliasRegistry {
+    pub bundles: HashMap<String, Bundle>,
+    pub remotes: HashMap<String, RemoteResource>,
 }
 
 impl AliasRegistry {
