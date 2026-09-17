@@ -43,7 +43,7 @@ fn main() -> anyhow::Result<()> {
             email,
         } => {
             let ctx = ProjectContext {
-                template_alias: template.to_string(),
+                project_template: template.clone(),
                 project_name: name.to_string(),
                 // Clone the string if it exists, otherwise use the default
                 company: company
@@ -77,8 +77,8 @@ fn main() -> anyhow::Result<()> {
                 alias,
                 repo,
                 path,
-                category: alias_type,
-            } => remotes::add_alias(&alias, &repo, &path, &alias_type, &unity_project, &reporter)?,
+                category,
+            } => remotes::add_alias(&alias, &repo, &path, &category, &unity_project, &reporter)?,
             RemotesActions::Remove { alias } => {
                 remotes::remove_alias(&alias, &unity_project, &reporter)?
             }

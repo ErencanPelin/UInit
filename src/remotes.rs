@@ -41,7 +41,7 @@ pub fn add_alias(
     alias: &String,
     repo: &String,
     path: &String,
-    alias_type: &AssetCategory,
+    category: &AssetCategory,
     unity_project: &UnityProject,
     reporter: &Reporter,
 ) -> anyhow::Result<()> {
@@ -69,7 +69,7 @@ pub fn add_alias(
         RemoteResource {
             url: repo.to_string(),
             path: path.to_string(),
-            category: alias_type.to_string(),
+            category: *category,
         },
     );
 

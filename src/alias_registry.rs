@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use crate::config::UinitConfig;
+use crate::{config::UinitConfig, enums::AssetCategory};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AliasRegistry {
@@ -24,7 +24,7 @@ pub struct Dependency {
 pub struct RemoteResource {
     pub url: String,
     pub path: String,
-    pub category: String,
+    pub category: AssetCategory,
 }
 
 impl Default for AliasRegistry {

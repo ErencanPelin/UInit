@@ -74,8 +74,8 @@ fn validate_project_structure(
     reporter.info("Checking current template from uinit.toml");
     let template = PROJECT_TEMPLATES
         .iter()
-        .find(|(name, _, _)| *name == ctx.template_alias)
-        .ok_or_else(|| anyhow::anyhow!("Unknown template alias: {}", ctx.template_alias))?;
+        .find(|(project_template, _, _)| *project_template == ctx.project_template)
+        .ok_or_else(|| anyhow::anyhow!("Unknown template alias: {}", ctx.project_template))?;
 
     let (_, paths, _dependencies) = template;
 

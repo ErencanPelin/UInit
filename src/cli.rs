@@ -1,6 +1,6 @@
 use clap::{Args, Parser, Subcommand};
 
-use crate::enums::{AssetCategory, CiHost, WorkflowType};
+use crate::enums::{AssetCategory, CiHost, ProjectTemplate, WorkflowType};
 
 #[derive(Parser)]
 #[command(author, version, about = "Bootstrap Unity projects faster", long_about = None)]
@@ -26,7 +26,7 @@ pub enum Commands {
 
         /// Project type
         #[arg(short, long, value_enum)]
-        template: String,
+        template: ProjectTemplate,
 
         /// Project owner company name (used for namespaces and package names). Use your own name if you're not a company
         #[arg(short, long)]
@@ -97,7 +97,7 @@ pub enum RemotesActions {
     /// List all available aliases
     List {},
 
-    //// Add a new alias mapping to the local config
+    /// Add a new alias mapping to the local config
     Add {
         /// Alias to be used when using ``uinit add``
         alias: String,
