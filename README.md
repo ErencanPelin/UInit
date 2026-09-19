@@ -52,9 +52,9 @@ uinit setup ci github editor-tests
 ### To create a new feature domain
 A feature domain lives inside /Scripts. This command creates sub folders for the feature (runtime, editor, tests) as well as the necessary assembly definition files for those sub folders.
 ```sh
-uinit gen <FEATURE_NAME> [--no-editor] [--no-tests]
+uinit feature <FEATURE_NAME> [--no-editor] [--no-tests]
 # e.g.
-uinit gen MyNewFeature
+uinit feature MyNewFeature
 ```
 
 ### To import predefined tool scripts, utils or feature modules

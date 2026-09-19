@@ -62,9 +62,11 @@ fn main() -> anyhow::Result<()> {
                 let ctx = steam::SteamContext { app_id: *app_id };
                 steam::init_steam(&ctx, &unity_project, &reporter)?;
             }
-            Integration::Ci { host, name } => handle_ci(&host, &name, &unity_project, &reporter)?,
+            Integration::Ci { host, workflow } => {
+                handle_ci(&host, &workflow, &unity_project, &reporter)?
+            }
         },
-        Commands::Gen {
+        Commands::Feature {
             name,
             no_editor,
             no_tests,

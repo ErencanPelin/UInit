@@ -39,7 +39,7 @@ pub enum Commands {
     /// Configure complex integrations (Steam, CI, etc.)
     Setup(SetupArgs),
     /// Scaffold a new feature with Runtime, Editor, Tests assemblies
-    Gen {
+    Feature {
         /// Name of the feature/assembly
         name: String,
         /// Skip creation of the Editor folder
@@ -85,10 +85,11 @@ pub enum Integration {
     },
     /// Configure CI Workflows (GitHub/GitLab)
     Ci {
-        #[arg(value_enum)]
+        #[arg(value_enum, short, long)]
         host: CiHost,
         /// The name of the workflow you want to create. Use --help to see available options.
-        name: WorkflowType,
+        #[arg(short, long)]
+        workflow: WorkflowType,
     },
 }
 
