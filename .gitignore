@@ -21,4 +21,4 @@ target
 #.idea/
 
 # Ignore the test project directory
-TestProject
+.test-env
