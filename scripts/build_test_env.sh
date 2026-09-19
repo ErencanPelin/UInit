@@ -24,4 +24,4 @@ cat > "$test_env_dir/Packages/manifest.json" <<'EOF'
 }
 EOF
 echo "Created fake Unity project at $test_env_dir/"
-echo "Try it: cd $test_env_dir && ../target/debug/uinit doctor"
+echo "Try it: just doctor-check"

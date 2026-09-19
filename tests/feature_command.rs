@@ -3,7 +3,7 @@ use assert_cmd::Command;
 use common::FakeUnityProject;
 
 #[test]
-fn gen_creates_expected_folder_structure() {
+fn feature_creates_expected_folder_structure() {
     let project = FakeUnityProject::new();
 
     // run init first to create a project structure
@@ -32,9 +32,9 @@ fn gen_creates_expected_folder_structure() {
 
     // validate assembly definition files
     for file in &[
-        "Assets/MyGameProject/Scripts/MyNewFeature/Runtime/com.DefaultCompany.MyGameProject.MyNewFeature.Runtime.asmdef",
-        "Assets/MyGameProject/Scripts/MyNewFeature/Editor/com.DefaultCompany.MyGameProject.MyNewFeature.Editor.asmdef",
-        "Assets/MyGameProject/Scripts/MyNewFeature/Tests/com.DefaultCompany.MyGameProject.MyNewFeature.Tests.asmdef",
+        "Assets/MyGameProject/Scripts/MyNewFeature/Runtime/com.defaultcompany.mygameproject.mynewfeature.runtime.asmdef",
+        "Assets/MyGameProject/Scripts/MyNewFeature/Editor/com.defaultcompany.mygameproject.mynewfeature.editor.asmdef",
+        "Assets/MyGameProject/Scripts/MyNewFeature/Tests/com.defaultcompany.mygameproject.mynewfeature.tests.asmdef",
     ] {
         assert!(project.path().join(file).is_file());
     }
