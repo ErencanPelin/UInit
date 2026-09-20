@@ -13,13 +13,21 @@ fn init_game_creates_expected_folder_structure() {
         .assert()
         .success();
 
-    assert!(project.path().join("Assets/MyGameProject/Scripts").is_dir());
-    assert!(
-        project
-            .path()
-            .join("Assets/MyGameProject/Animations")
-            .is_dir()
-    );
+    for folder in &[
+        "Assets/MyGameProject/Animations/",
+        "Assets/MyGameProject/Audio/",
+        "Assets/MyGameProject/Materials/",
+        "Assets/MyGameProject/Meshes/",
+        "Assets/MyGameProject/Prefabs/",
+        "Assets/MyGameProject/Scenes/",
+        "Assets/MyGameProject/Scripts/",
+        "Assets/MyGameProject/Scripts/Core/",
+        "Assets/MyGameProject/Scripts/Common/",
+        "Assets/MyGameProject/Shaders/",
+        "Assets/MyGameProject/Textures/",
+    ] {
+        assert!(project.path().join(folder).is_dir());
+    }
     assert!(project.path().join(".gitignore").is_file());
 }
 
@@ -43,17 +51,28 @@ fn init_package_creates_expected_folder_structure() {
         .assert()
         .success();
 
-    assert!(
-        project
-            .path()
-            .join("Assets/MyPackageProject/Scripts")
-            .is_dir()
-    );
-    assert!(
-        project
-            .path()
-            .join("Assets/MyPackageProject/Animations")
-            .is_dir()
-    );
-    assert!(project.path().join(".gitignore").is_file());
+    // validate folders
+    for folder in &[
+        "Assets/MyPackageProject/Animations/",
+        "Assets/MyPackageProject/Materials/",
+        "Assets/MyPackageProject/Meshes/",
+        "Assets/MyPackageProject/Prefabs/",
+        "Assets/MyPackageProject/Scenes/",
+        "Assets/MyPackageProject/Scripts/",
+        "Assets/MyPackageProject/Scripts/Core/",
+        "Assets/MyPackageProject/Scripts/Common/",
+        "Assets/MyPackageProject/Samples/",
+        "Assets/MyPackageProject/Textures/",
+    ] {
+        assert!(project.path().join(folder).is_dir());
+    }
+
+    for file in &[
+        "Assets/MyPackageProject/package.json",
+        "Assets/MyPackageProject/README.md",
+        "Assets/MyPackageProject/CHANGELOG.md",
+        "Assets/MyPackageProject/LICENSE",
+    ] {
+        assert!(project.path().join(file).is_file());
+    }
 }

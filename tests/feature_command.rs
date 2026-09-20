@@ -45,4 +45,18 @@ fn feature_creates_expected_folder_structure() {
     ] {
         assert!(project.path().join(file).is_file());
     }
+
+    // validate test assembly definition file references the runtime assembly
+    let test_asmdef_content = project.read_file_at_path(
+        "Assets/MyGameProject/Scripts/MyNewFeature/Tests/com.defaultcompany.mygameproject.mynewfeature.tests.asmdef",
+    );
+    assert!(test_asmdef_content.contains("com.defaultcompany.mygameproject.mynewfeature.runtime"));
+
+    // validate editor assembly definition file references the runtime assembly
+    let editor_asmdef_content = project.read_file_at_path(
+        "Assets/MyGameProject/Scripts/MyNewFeature/Editor/com.defaultcompany.mygameproject.mynewfeature.editor.asmdef",
+    );
+    assert!(
+        editor_asmdef_content.contains("com.defaultcompany.mygameproject.mynewfeature.runtime")
+    );
 }
