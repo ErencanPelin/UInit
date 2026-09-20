@@ -7,7 +7,7 @@ use crate::{
     constants::{
         CHANGELOG_TEMPLATE, GITIGNORE_TEMPLATE, LICENSE_JINJA, PACKAGE_JINJA, README_JINJA,
     },
-    fs::{self, FileSystem},
+    fs::FileSystem,
     project_context::ProjectContext,
     project_template_registry::ProjectTemplateRegistry,
     reporter::Reporter,

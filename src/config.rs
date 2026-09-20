@@ -2,11 +2,7 @@ use anyhow::Context;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
-use crate::{
-    alias_registry::AliasRegistry,
-    fs::{self, FileSystem},
-    project_context::ProjectContext,
-};
+use crate::{alias_registry::AliasRegistry, fs::FileSystem, project_context::ProjectContext};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UinitConfig {

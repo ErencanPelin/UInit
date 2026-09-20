@@ -10,7 +10,6 @@ use crate::{
     config::UinitConfig,
     constants::{self},
     feature::create_assembly_definition,
-    fs,
     new_project::add_package,
     project_context::ProjectContext,
     reporter::Reporter,
@@ -245,7 +244,7 @@ fn fetch_directory(
         let final_local_path = local_dest_path.join(folder_name);
 
         reporter.info("Copying pulled files intto the project.");
-        &fs.copy_dir_recursive(&downloaded_path, &final_local_path)?;
+        fs.copy_dir_recursive(&downloaded_path, &final_local_path)?;
     } else {
         // Debug: List files to see what Git actually pulled
         reporter.info("Oops, looks like git didn't pull everything correctly.");

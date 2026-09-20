@@ -3,10 +3,7 @@ use std::path::{Path, PathBuf};
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    fs::{self, FileSystem},
-    reporter::Reporter,
-};
+use crate::{fs::FileSystem, reporter::Reporter};
 
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct GlobalConfig {

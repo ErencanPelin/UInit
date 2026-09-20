@@ -40,7 +40,7 @@ pub fn handle_ci(
     reporter.info("Creating required folder structure");
     let dir_path = unity_project.root.join(get_dest_path_for_ci_host(&ci_host));
     let file_path = dir_path.join(file_name);
-    &fs.create_dirs(&dir_path)?;
+    fs.create_dirs(&dir_path)?;
 
     reporter.info("Creating new file for template");
     if !fs.create_file(&file_path)? {

@@ -1,12 +1,8 @@
 use std::path::Path;
 
 use crate::{
-    config::UinitConfig,
-    constants,
-    fs::{self, FileSystem},
-    project_context::ProjectContext,
-    reporter::Reporter,
-    unity_project::UnityProject,
+    config::UinitConfig, constants, fs::FileSystem, project_context::ProjectContext,
+    reporter::Reporter, unity_project::UnityProject,
 };
 use anyhow::{Context, bail};
 use minijinja::{Environment, context};
