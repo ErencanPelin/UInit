@@ -1,6 +1,7 @@
 # Developing
 ## Dependencies
 1. You need rust installed
+2. You need just installed to use the justfile commands
 
 ## Testing
 To run a test without building:
@@ -13,7 +14,7 @@ cargo run -- project init --template package MyTestProject
 To test the project by building:
 1. Build the project `cargo build`
 2. Install the project locally `cargo install --path .`
-3. Run the `create_test_env.sh` script to create your test project
+3. Run `just test-env` to create your test project
 4. `cd` into the test project and run `uinit` commands from within it
 
 
