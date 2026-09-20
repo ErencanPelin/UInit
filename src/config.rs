@@ -2,7 +2,11 @@ use anyhow::Context;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
-use crate::{alias_registry::AliasRegistry, fs, project_context::ProjectContext};
+use crate::{
+    alias_registry::AliasRegistry,
+    fs::{self, FileSystem},
+    project_context::ProjectContext,
+};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UinitConfig {
@@ -27,11 +31,11 @@ impl UinitConfig {
     }
 
     // TODO: limitation here is if something goes wrong mid-write
-    pub fn save(&self, dir: &Path) -> anyhow::Result<()> {
+    pub fn save(&self, dir: &Path, fs: &FileSystem) -> anyhow::Result<()> {
         let path = dir.join("uinit.toml");
         let text =
             toml::to_string_pretty(self).with_context(|| "Failed to save uinit as .toml.")?;
-        fs::write_to_file(&text, &path)?;
+        fs.write_to_file(&text, &path)?;
 
         Ok(())
     }

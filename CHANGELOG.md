@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.1] - 2026-09-20
 ### Added
+- Optional `--dry-run` global flag that can be used with any command to preview FileSystem changes before they actually occur
+
+
+## [1.0.1] - 2026-09-20
+### Added
 - Added global Uinit config to set default company name and email once. Subsequent `init` commands will use the global default. Run `uinit config` to view defaults
 
 

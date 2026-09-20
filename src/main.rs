@@ -26,6 +26,7 @@ use crate::{
     cli::{Cli, Commands, Integration, RemotesActions},
     constants::{DEFAULT_COMPANY, DEFAULT_EMAIL},
     doctor::handle_doctor,
+    fs::FileSystem,
     new_project::init_project,
     project_context::ProjectContext,
     project_template_registry::ProjectTemplateRegistry,
@@ -36,10 +37,11 @@ use crate::{
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
     let reporter = Reporter::new(cli.verbose, cli.no_prompts);
+    let fs = FileSystem::new(cli.dry_run);
     let project_template_registry = ProjectTemplateRegistry::load();
 
     if let Commands::Config { company, email } = &cli.command {
-        global_config::handle_config(company.clone(), email.clone(), &reporter)?;
+        global_config::handle_config(company.clone(), email.clone(), &reporter, &fs)?;
     } else {
         let unity_project = UnityProject::detect()?;
         let global_config = global_config::GlobalConfig::load()?;
@@ -64,15 +66,21 @@ fn main() -> anyhow::Result<()> {
                         .unwrap_or_else(|| DEFAULT_EMAIL.to_string()),
                     year: chrono::Utc::now().year(),
                 };
-                init_project(&ctx, &unity_project, &reporter, &project_template_registry)?;
+                init_project(
+                    &ctx,
+                    &unity_project,
+                    &reporter,
+                    &fs,
+                    &project_template_registry,
+                )?;
             }
             Commands::Setup(args) => match &args.integration {
                 Integration::Steam { app_id } => {
                     let ctx = steam::SteamContext { app_id: *app_id };
-                    steam::init_steam(&ctx, &unity_project, &reporter)?;
+                    steam::init_steam(&ctx, &unity_project, &reporter, &fs)?;
                 }
                 Integration::Ci { host, workflow } => {
-                    handle_ci(&host, &workflow, &unity_project, &reporter)?
+                    handle_ci(&host, &workflow, &unity_project, &reporter, &fs)?
                 }
             },
             Commands::Feature {
@@ -80,10 +88,10 @@ fn main() -> anyhow::Result<()> {
                 no_editor,
                 no_tests,
             } => {
-                feature::init_feature(name, *no_editor, *no_tests, &unity_project, &reporter)?;
+                feature::init_feature(name, *no_editor, *no_tests, &unity_project, &reporter, &fs)?;
             }
             Commands::Import { alias, path } => {
-                import::handle_import(alias, &path, &unity_project, &reporter)?;
+                import::handle_import(alias, &path, &unity_project, &reporter, &fs)?;
             }
             Commands::Remote { action } => match action {
                 RemotesActions::List {} => remotes::list_aliases(&unity_project, &reporter)?,
@@ -92,16 +100,26 @@ fn main() -> anyhow::Result<()> {
                     repo,
                     path,
                     category,
-                } => {
-                    remotes::add_alias(&alias, &repo, &path, &category, &unity_project, &reporter)?
-                }
+                } => remotes::add_alias(
+                    &alias,
+                    &repo,
+                    &path,
+                    &category,
+                    &unity_project,
+                    &reporter,
+                    &fs,
+                )?,
                 RemotesActions::Remove { alias } => {
-                    remotes::remove_alias(&alias, &unity_project, &reporter)?
+                    remotes::remove_alias(&alias, &unity_project, &reporter, &fs)?
                 }
             },
-            Commands::Doctor { fix } => {
-                handle_doctor(&unity_project, &reporter, *fix, &project_template_registry)?
-            }
+            Commands::Doctor { fix } => handle_doctor(
+                &unity_project,
+                &reporter,
+                &fs,
+                *fix,
+                &project_template_registry,
+            )?,
             Commands::Config { .. } => unreachable!("handled above"),
         }
     }

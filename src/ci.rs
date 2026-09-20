@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use crate::{
     constants::WORKFLOW_TEMPATES,
     enums::{CiHost, WorkflowType},
-    fs,
+    fs::FileSystem,
     reporter::Reporter,
     unity_project::UnityProject,
 };
@@ -13,6 +13,7 @@ pub fn handle_ci(
     workflow_type: &WorkflowType,
     unity_project: &UnityProject,
     reporter: &Reporter,
+    fs: &FileSystem,
 ) -> anyhow::Result<()> {
     reporter.info(&format!("Finding templates for CI host '{}'", ci_host));
     let (_, workflows_for_host) = WORKFLOW_TEMPATES
@@ -39,10 +40,10 @@ pub fn handle_ci(
     reporter.info("Creating required folder structure");
     let dir_path = unity_project.root.join(get_dest_path_for_ci_host(&ci_host));
     let file_path = dir_path.join(file_name);
-    fs::create_dirs(&dir_path)?;
+    &fs.create_dirs(&dir_path)?;
 
     reporter.info("Creating new file for template");
-    if !fs::create_file(&file_path)? {
+    if !fs.create_file(&file_path)? {
         // ask if we want to overwrite the file that already exists
         let confirmation = reporter.prompt(&format!(
             "A file at {:?} already exists. Do you wish to overwrite it anyway?",
@@ -55,7 +56,7 @@ pub fn handle_ci(
     }
 
     reporter.info("Writing template to file");
-    fs::write_to_file(&workflow_template.to_string(), &file_path)?;
+    fs.write_to_file(&workflow_template.to_string(), &file_path)?;
 
     reporter.success(&format!(
         "Created {} workflow for {}",

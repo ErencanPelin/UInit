@@ -114,3 +114,16 @@ dependencies = [
 ```sh
 uinit doctor
 ```
+
+
+### Optional Global Flags
+|Flag|Description|
+|-|-|
+|`--verbose`|Show detailed information while the command runs|
+|`--no-prompt`|Automatically responds 'yes' to any command that asks for confirmation. Useful for CICD pipelines
+|`--dry-run`|Outputs changes that will occur when run without the `--dry-run` flag. Let's you preview changes before they are actually made.
+
+```sh
+# e.g.
+uinit init ... --verbose --dry-run --no-prompt
+```
