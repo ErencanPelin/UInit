@@ -1,6 +1,6 @@
 [package]
 name = "uinit"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Erencan Pelin <epelin.business@gmail.com>"]
 edition = "2024"
 repository = "https://github.com/ErencanPelin/UInit"
@@ -20,6 +20,8 @@ strum = { version = "0.26", features = ["derive"] }
 axoupdater = "0.10.0"
 pollster = "0.4.0"
 dialoguer = "0.12.0"
+dirs = "7.0.0"
+tokio = "1.53.1"
 
 [dev-dependencies]
 tempfile = "3.3.0"

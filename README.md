@@ -27,6 +27,14 @@ curl --proto '=https' --tlsv1.2 -LsSf https://github.com/ErencanPelin/UInit/rele
 2. Run `uinit --help` in your terminal to get started.
 3. Update your current version with `uinit-update`
 
+### Set up your global config
+These defaults will be used every time you use the `init` command.
+```sh
+uinit config --company <COMPANY_NAME> --email <EMAIL>
+# e.g.
+uinit config --company ErencanPelin --email myemail@mailserver.com
+```
+
 ### To setup UInit in your Unity project
 ```sh
 uinit init --template <GAME | PACKAGE> <PROJECT_NAME>

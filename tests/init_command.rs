@@ -30,7 +30,16 @@ fn init_package_creates_expected_folder_structure() {
     Command::cargo_bin("uinit")
         .unwrap()
         .current_dir(project.path())
-        .args(&["init", "--template", "package", "MyPackageProject"])
+        .args(&[
+            "init",
+            "--template",
+            "package",
+            "MyPackageProject",
+            "--company",
+            "DefaultCompany",
+            "--email",
+            "defaultcompany@example.com",
+        ])
         .assert()
         .success();
 

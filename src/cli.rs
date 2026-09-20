@@ -68,6 +68,13 @@ pub enum Commands {
         #[arg(short, long, default_value_t = false)]
         fix: bool,
     },
+    /// Set global configuration options for uinit
+    Config {
+        #[arg(short, long)]
+        company: Option<String>,
+        #[arg(short, long)]
+        email: Option<String>,
+    },
 }
 
 #[derive(Args)]
