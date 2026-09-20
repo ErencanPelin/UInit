@@ -24,3 +24,7 @@ clean-test-env:
 # Run a quick doctor pass inside the fake project, rebuilding first.
 doctor-check: test-env
     cd {{test_env_dir}} && ../target/debug/uinit doctor
+
+# Locally install the current build of the CLI
+local-install: build
+    cargo install --path . --force

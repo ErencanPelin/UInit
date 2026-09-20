@@ -10,7 +10,14 @@ fn feature_creates_expected_folder_structure() {
     Command::cargo_bin("uinit")
         .unwrap()
         .current_dir(project.path())
-        .args(&["init", "--template", "game", "MyGameProject"])
+        .args(&[
+            "init",
+            "--template",
+            "game",
+            "MyGameProject",
+            "--company",
+            "DefaultCompany",
+        ])
         .assert()
         .success();
 
