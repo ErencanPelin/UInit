@@ -2,6 +2,7 @@ use anyhow::{Context, Ok};
 
 use crate::{
     config::UinitConfig,
+    fs::FileSystem,
     new_project::{add_package, get_project_packages},
     project_context::ProjectContext,
     project_template_registry::ProjectTemplateRegistry,
@@ -12,6 +13,7 @@ use crate::{
 pub fn handle_doctor(
     unity_project: &UnityProject,
     reporter: &Reporter,
+    fs: &FileSystem,
     fix: bool,
     project_template_registry: &ProjectTemplateRegistry,
 ) -> anyhow::Result<()> {
@@ -35,8 +37,9 @@ pub fn handle_doctor(
             "Project Structure",
             validate_project_structure(
                 &ctx,
-                unity_project,
-                reporter,
+                &unity_project,
+                &reporter,
+                &fs,
                 fix,
                 project_template_registry,
             )?,
@@ -74,6 +77,7 @@ fn validate_project_structure(
     ctx: &ProjectContext,
     unity_project: &UnityProject,
     reporter: &Reporter,
+    fs: &FileSystem,
     apply_fix: bool,
     project_template_registry: &ProjectTemplateRegistry,
 ) -> anyhow::Result<Vec<String>> {
@@ -129,7 +133,7 @@ fn validate_project_structure(
     for dep in template_deps {
         if !project_deps.contains_key(&dep.name) {
             if apply_fix {
-                add_package(&unity_project, &reporter, &dep.name, &dep.version)?;
+                add_package(&unity_project, &reporter, &fs, &dep.name, &dep.version)?;
             } else {
                 result.push(format!("  ⚠️  Missing package dependency: {}", dep.name));
             }

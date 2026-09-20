@@ -15,6 +15,10 @@ pub struct Cli {
     /// Always respond 'yes' to any prompts that might appear
     #[arg(short, long, global = true, default_value_t = false)]
     pub no_prompts: bool,
+
+    /// Dry run mode. Show what would be done without making any changes.
+    #[arg(short, long, global = true, default_value_t = false)]
+    pub dry_run: bool,
 }
 
 #[derive(Subcommand)]

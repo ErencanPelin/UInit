@@ -5,6 +5,7 @@ use crate::{
     alias_registry::{AliasRegistry, RemoteResource},
     config::UinitConfig,
     enums::AssetCategory,
+    fs::FileSystem,
     reporter::Reporter,
     unity_project::UnityProject,
 };
@@ -44,6 +45,7 @@ pub fn add_alias(
     category: &AssetCategory,
     unity_project: &UnityProject,
     reporter: &Reporter,
+    fs: &FileSystem,
 ) -> anyhow::Result<()> {
     reporter.info("Loading uinit.toml file");
     let mut config: UinitConfig = UinitConfig::load(&unity_project.root)?;
@@ -74,7 +76,7 @@ pub fn add_alias(
     );
 
     reporter.info("Saving config and writing uinit.toml to disk.");
-    config.save(&unity_project.root)?;
+    config.save(&unity_project.root, &fs)?;
 
     reporter.success(&format!("Added custom alias '{}' to uinit.toml.", alias));
     Ok(())
@@ -84,6 +86,7 @@ pub fn remove_alias(
     alias: &String,
     unity_project: &UnityProject,
     reporter: &Reporter,
+    fs: &FileSystem,
 ) -> anyhow::Result<()> {
     reporter.info("Loading uinit.toml file");
     let mut config: UinitConfig = UinitConfig::load(&unity_project.root)?;
@@ -102,7 +105,7 @@ pub fn remove_alias(
     }
 
     reporter.info("Saving config and writing uinit.toml to disk.");
-    config.save(&unity_project.root)?;
+    config.save(&unity_project.root, &fs)?;
 
     reporter.success(&format!(
         "Removed custom alias '{}' from uinit.toml.",

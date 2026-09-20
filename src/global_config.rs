@@ -3,7 +3,10 @@ use std::path::{Path, PathBuf};
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
-use crate::{fs, reporter::Reporter};
+use crate::{
+    fs::{self, FileSystem},
+    reporter::Reporter,
+};
 
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct GlobalConfig {
@@ -32,12 +35,14 @@ impl GlobalConfig {
         }
     }
 
-    pub fn save_to(&self, path: &Path) -> anyhow::Result<()> {
+    pub fn save_to(&self, path: &Path, fs: &FileSystem) -> anyhow::Result<()> {
         if let Some(parent) = path.parent() {
             std::fs::create_dir_all(parent)?;
         }
         let toml_string = toml::to_string_pretty(self)?;
-        fs::write_to_file(&toml_string, path)
+        fs.write_to_file(&toml_string, path)
+            .with_context(|| format!("Failed to write global config to {:?}", path))?;
+        Ok(())
     }
 }
 
@@ -45,6 +50,7 @@ pub fn handle_config(
     company: Option<String>,
     email: Option<String>,
     reporter: &Reporter,
+    fs: &FileSystem,
 ) -> anyhow::Result<()> {
     let path = GlobalConfig::default_config_path()
         .ok_or_else(|| anyhow::anyhow!("Could not determine config directory"))?;
@@ -69,7 +75,7 @@ pub fn handle_config(
         config.email = Some(email);
     }
 
-    config.save_to(&path)?;
+    config.save_to(&path, &fs)?;
     reporter.success(&format!("Updated global config at {:?}", path));
     Ok(())
 }

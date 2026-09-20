@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use std::{path::Path, process::Command};
 
 use crate::enums::AssetCategory;
+use crate::fs::FileSystem;
 use crate::{
     alias_registry::{AliasRegistry, RemoteResource, ResolvedResource},
     config::UinitConfig,
@@ -21,6 +22,7 @@ pub fn handle_import(
     path: &Option<String>,
     unity_project: &UnityProject,
     reporter: &Reporter,
+    fs: &FileSystem,
 ) -> anyhow::Result<()> {
     let config = UinitConfig::load(&unity_project.root)?;
     let ctx = ProjectContext::from_config(&config);
@@ -40,7 +42,7 @@ pub fn handle_import(
             }
 
             for dep in &deps {
-                add_package(&unity_project, &reporter, &dep.name, &dep.version)?;
+                add_package(&unity_project, &reporter, &fs, &dep.name, &dep.version)?;
             }
 
             reporter.success(&format!("Successfully added {} packages.", deps.len()));
@@ -63,10 +65,10 @@ pub fn handle_import(
 
             match resource.category {
                 AssetCategory::Util => {
-                    import_util(&path, &ctx, &unity_project, &reporter, &resource)?
+                    import_util(&path, &ctx, &unity_project, &reporter, &fs, &resource)?
                 }
                 AssetCategory::Module => {
-                    import_module(&path, &ctx, &unity_project, &reporter, &resource)?
+                    import_module(&path, &ctx, &unity_project, &reporter, &fs, &resource)?
                 }
                 AssetCategory::Tool => import_tool(&path, &unity_project, &reporter, &resource)?,
             }
@@ -111,6 +113,7 @@ fn import_module(
     ctx: &ProjectContext,
     unity_project: &UnityProject,
     reporter: &Reporter,
+    fs: &FileSystem,
     remote_resource: &RemoteResource,
 ) -> anyhow::Result<()> {
     // define default path
@@ -123,6 +126,7 @@ fn import_module(
 
     fetch_directory(
         &reporter,
+        &fs,
         &remote_resource.url,
         &remote_resource.path,
         &local_path,
@@ -136,6 +140,7 @@ fn import_util(
     ctx: &ProjectContext,
     unity_project: &UnityProject,
     reporter: &Reporter,
+    fs: &FileSystem,
     remote_resource: &RemoteResource,
 ) -> anyhow::Result<()> {
     // define default path
@@ -148,6 +153,7 @@ fn import_util(
 
     fetch_directory(
         &reporter,
+        &fs,
         &remote_resource.url,
         &remote_resource.path,
         &local_path,
@@ -163,7 +169,8 @@ fn import_util(
             &local_path,
             constants::ASSEMBLY_DEF_RUNTIME_JINJA,
             &ctx,
-            reporter,
+            &reporter,
+            &fs,
             "runtime",
             "utils",
             None,
@@ -176,6 +183,7 @@ fn import_util(
 
 fn fetch_directory(
     reporter: &Reporter,
+    fs: &FileSystem,
     repo: &str,
     remote_folder_path: &str,
     local_dest_path: &Path,
@@ -237,7 +245,7 @@ fn fetch_directory(
         let final_local_path = local_dest_path.join(folder_name);
 
         reporter.info("Copying pulled files intto the project.");
-        fs::copy_dir_recursive(&downloaded_path, &final_local_path)?;
+        &fs.copy_dir_recursive(&downloaded_path, &final_local_path)?;
     } else {
         // Debug: List files to see what Git actually pulled
         reporter.info("Oops, looks like git didn't pull everything correctly.");

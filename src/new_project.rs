@@ -7,7 +7,7 @@ use crate::{
     constants::{
         CHANGELOG_TEMPLATE, GITIGNORE_TEMPLATE, LICENSE_JINJA, PACKAGE_JINJA, README_JINJA,
     },
-    fs,
+    fs::{self, FileSystem},
     project_context::ProjectContext,
     project_template_registry::ProjectTemplateRegistry,
     reporter::Reporter,
@@ -18,6 +18,7 @@ pub fn init_project(
     ctx: &ProjectContext,
     unity_project: &UnityProject,
     reporter: &Reporter,
+    fs: &FileSystem,
     project_template_registry: &ProjectTemplateRegistry,
 ) -> anyhow::Result<()> {
     println!(
@@ -25,17 +26,23 @@ pub fn init_project(
         ctx.project_name, ctx.project_type
     );
 
-    create_from_template(ctx, unity_project, reporter, project_template_registry)
-        .with_context(|| format!("Failed to apply template: {}", ctx.project_type))?;
+    create_from_template(
+        &ctx,
+        &unity_project,
+        &reporter,
+        &fs,
+        &project_template_registry,
+    )
+    .with_context(|| format!("Failed to apply template: {}", ctx.project_type))?;
 
-    modify_project_settings(ctx, unity_project, reporter)
+    modify_project_settings(&ctx, &unity_project, &reporter, &fs)
         .with_context(|| "Failed to update Unity ProjectSettings.asset.")?;
 
     // write config file
     reporter.info("Updating uinit.toml config file.");
     let config: UinitConfig = ctx.into();
     config
-        .save(&unity_project.root)
+        .save(&unity_project.root, &fs)
         .with_context(|| "Failed to save uinit config to disk.")?;
 
     println!("\n✨ '{}' initialized successfully.", ctx.project_name);
@@ -46,6 +53,7 @@ fn create_from_template(
     ctx: &ProjectContext,
     unity_project: &UnityProject,
     reporter: &Reporter,
+    fs: &FileSystem,
     project_template_registry: &ProjectTemplateRegistry,
 ) -> anyhow::Result<()> {
     reporter.info("Creating project from template.");
@@ -76,7 +84,7 @@ fn create_from_template(
         let relative_path: String = unity_project.rel_path(&full_path);
 
         if raw_path.ends_with('/') {
-            if fs::create_dirs(&full_path)? {
+            if fs.create_dirs(&full_path)? {
                 reporter.info(&format!("Creating folder {:?}", full_path));
                 println!("  📁 Created: {}", relative_path);
             } else {
@@ -88,7 +96,7 @@ fn create_from_template(
             continue;
         }
 
-        if fs::create_file(&full_path)? {
+        if fs.create_file(&full_path)? {
             reporter.info(&format!("Creating file {:?}", full_path));
             println!("  📄 Created: {}", relative_path);
         }
@@ -104,7 +112,7 @@ fn create_from_template(
                 raw_template.to_string()
             };
             reporter.info(&format!("Writing to file {:?}", full_path));
-            fs::write_to_file(&content, &full_path)?;
+            fs.write_to_file(&content, &full_path)?;
         }
     }
 
@@ -112,8 +120,9 @@ fn create_from_template(
     // TODO: split this into its own function
     for dependency in &template.dependencies {
         add_package(
-            unity_project,
-            reporter,
+            &unity_project,
+            &reporter,
+            &fs,
             &dependency.name,
             &dependency.version,
         )?;
@@ -126,6 +135,7 @@ fn modify_project_settings(
     ctx: &ProjectContext,
     unity_project: &UnityProject,
     reporter: &Reporter,
+    fs: &FileSystem,
 ) -> anyhow::Result<()> {
     let path = unity_project
         .project_settings_dir()
@@ -153,15 +163,16 @@ fn modify_project_settings(
         serde_yaml::to_string(&settings).with_context(|| "Failed to serialize settings")?;
 
     reporter.info("Writing updated project settings back to disk.");
-    fs::write_to_file(&yaml_out, &path)?;
-    println!("  ✅ Updated companyName and productName in project settings.");
-
+    if fs.write_to_file(&yaml_out, &path)? {
+        println!("  ✅ Updated companyName and productName in project settings.");
+    }
     Ok(())
 }
 
 pub fn add_package(
     unity_project: &UnityProject,
     reporter: &Reporter,
+    fs: &FileSystem,
     package_name: &str,
     version: &str,
 ) -> anyhow::Result<()> {
@@ -194,18 +205,19 @@ pub fn add_package(
 
     reporter.info("Updating packages.");
     let output = serde_json::to_string_pretty(&manifest)?;
-    fs::write_to_file(&output, &path)?;
 
-    if existing.is_none() {
-        println!(
-            "  📦 Added package {} {} in manifest.json",
-            package_name, version
-        );
-    } else {
-        println!(
-            "  📦 Updated package {} to {} in manifest.json",
-            package_name, version
-        );
+    if fs.write_to_file(&output, &path)? {
+        if existing.is_none() {
+            println!(
+                "  📦 Added package {} {} in manifest.json",
+                package_name, version
+            );
+        } else {
+            println!(
+                "  📦 Updated package {} to {} in manifest.json",
+                package_name, version
+            );
+        }
     }
     Ok(())
 }

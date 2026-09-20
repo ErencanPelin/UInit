@@ -1,5 +1,8 @@
 use crate::{
-    constants::STEAMWORKS_PACKAGE, fs, new_project::add_package, reporter::Reporter,
+    constants::STEAMWORKS_PACKAGE,
+    fs::{self, FileSystem},
+    new_project::add_package,
+    reporter::Reporter,
     unity_project::UnityProject,
 };
 
@@ -11,6 +14,7 @@ pub fn init_steam(
     ctx: &SteamContext,
     unity_project: &UnityProject,
     reporter: &Reporter,
+    fs: &FileSystem,
 ) -> anyhow::Result<()> {
     println!("🚀 Uinit: Initialising steam...");
 
@@ -18,7 +22,7 @@ pub fn init_steam(
     let steam_appid_path = unity_project.root.join("steam_appid.txt");
 
     reporter.info("Creating steam_appid.txt file.");
-    let created = fs::create_file(&steam_appid_path)?;
+    let created = fs.create_file(&steam_appid_path)?;
 
     if created {
         reporter.success(&format!(
@@ -34,7 +38,7 @@ pub fn init_steam(
     }
 
     reporter.info("Writing to steam_appid.txt file.");
-    fs::write_to_file(&ctx.app_id.to_string(), &steam_appid_path)?;
+    fs.write_to_file(&ctx.app_id.to_string(), &steam_appid_path)?;
     reporter.success(&format!(
         "Synced steam_appid.txt with AppID: {}",
         ctx.app_id
@@ -42,8 +46,9 @@ pub fn init_steam(
 
     // add steamworks.net to manifest.json
     add_package(
-        unity_project,
-        reporter,
+        &unity_project,
+        &reporter,
+        &fs,
         STEAMWORKS_PACKAGE.0,
         STEAMWORKS_PACKAGE.1,
     )?;

@@ -1,7 +1,11 @@
 use std::path::Path;
 
 use crate::{
-    config::UinitConfig, constants, fs, project_context::ProjectContext, reporter::Reporter,
+    config::UinitConfig,
+    constants,
+    fs::{self, FileSystem},
+    project_context::ProjectContext,
+    reporter::Reporter,
     unity_project::UnityProject,
 };
 use anyhow::{Context, bail};
@@ -13,6 +17,7 @@ pub fn init_feature(
     no_tests: bool,
     unity_project: &UnityProject,
     reporter: &Reporter,
+    fs: &FileSystem,
 ) -> anyhow::Result<()> {
     println!("🚀 Uinit: Adding {} feature module...", feature_name);
 
@@ -37,7 +42,7 @@ pub fn init_feature(
 
     let runtime_folder = feature_folder.join("Runtime");
     reporter.info("Creating runtime folder.");
-    if fs::create_dirs(&runtime_folder)? {
+    if fs.create_dirs(&runtime_folder)? {
         println!("  📁 Created: {}", unity_project.rel_path(&runtime_folder));
     }
 
@@ -47,7 +52,8 @@ pub fn init_feature(
         &runtime_folder,
         constants::ASSEMBLY_DEF_RUNTIME_JINJA,
         &ctx,
-        reporter,
+        &reporter,
+        &fs,
         "runtime",
         feature_name,
         None,
@@ -57,7 +63,7 @@ pub fn init_feature(
     if !no_editor {
         let editor_folder = feature_folder.join("Editor");
         reporter.info("Creating editor folder.");
-        if fs::create_dirs(&editor_folder)? {
+        if fs.create_dirs(&editor_folder)? {
             println!("  📁 Created: {}", unity_project.rel_path(&editor_folder));
         }
 
@@ -66,7 +72,8 @@ pub fn init_feature(
             &editor_folder,
             constants::ASSEMBLY_DEF_EDITOR_JINJA,
             &ctx,
-            reporter,
+            &reporter,
+            &fs,
             "editor",
             feature_name,
             Some(&[runtime_assembly_name.clone()]),
@@ -77,7 +84,7 @@ pub fn init_feature(
     if !no_tests {
         let tests_folder = feature_folder.join("Tests");
         reporter.info("Creating tests folder.");
-        if fs::create_dirs(&tests_folder)? {
+        if fs.create_dirs(&tests_folder)? {
             println!("  📁 Created: {}", unity_project.rel_path(&tests_folder));
         }
 
@@ -86,7 +93,8 @@ pub fn init_feature(
             &tests_folder,
             constants::ASSEMBLY_DEF_TESTS_JINJA,
             &ctx,
-            reporter,
+            &reporter,
+            &fs,
             "tests",
             feature_name,
             Some(&[runtime_assembly_name.clone()]),
@@ -105,6 +113,7 @@ pub fn create_assembly_definition(
     template_source: &str,
     ctx: &ProjectContext,
     reporter: &Reporter,
+    fs: &FileSystem,
     assembly_type: &str,
     feature_name: &str,
     dependencies: Option<&[String]>,
@@ -130,7 +139,7 @@ pub fn create_assembly_definition(
     .with_context(|| format!("Failed to render {} asmdef", assembly_type))?;
 
     reporter.info("Creating assembly file on disk.");
-    if fs::create_file(&full_path)? {
+    if fs.create_file(&full_path)? {
         println!("  ✅ Created assembly {}", file_name);
     } else {
         reporter.info("Assembly file already exists on disk.");
