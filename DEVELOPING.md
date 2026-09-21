@@ -21,7 +21,13 @@ To test the project by building:
 ## Publishing a new version
 First update the version in [Cargo.toml](./Cargo.toml). If you don't do this, the plan step will fail on the pipeline.
 
-Then, simply push a new tag, this will kick off the release Github workflow to build and publish a new release.
+The easiest way to publish a new version is using the Just command. You will need to have just installed.
+This will read the version in the cargo.toml and release a new version based on that version.
+```sh
+just publish
+```
+
+Otherwise, you can simply push a new tag, this will kick off the release Github workflow to build and publish a new release.
 ```sh
 git tag v<MAJOR>.<MINOR>.<PATCH>
 git push origin <TAG>
