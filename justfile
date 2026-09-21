@@ -28,3 +28,7 @@ doctor-check: test-env
 # Locally install the current build of the CLI
 local-install: build
     cargo install --path . --force
+
+# Tag the version currently in Cargo.toml and push it, triggering the release pipeline.
+publish:
+    ./scripts/publish.sh
