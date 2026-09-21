@@ -5,7 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.1] - 2026-09-20
+## [1.0.3] - 2026-09-22
+### Changed
+- Flattened `setup` command. You no longer have to type `uinit setup ci ...`, you can just type `uinit ci ...`
+### Fixed
+- Steam command was not adhering to dry run mode
+- Import command was not adhering to dry run mode 
+
+## [1.0.2] - 2026-09-20
 ### Added
 - Optional `--dry-run` global flag that can be used with any command to preview FileSystem changes before they actually occur
 

@@ -8,7 +8,7 @@ use crate::{
     unity_project::UnityProject,
 };
 
-pub fn handle_ci(
+pub fn handle_add_ci_workflow(
     ci_host: &CiHost,
     workflow_type: &WorkflowType,
     unity_project: &UnityProject,
@@ -66,6 +66,19 @@ pub fn handle_ci(
     println!(
         "[info] Make sure to review the created file and setup any secrets requred by it in your repo."
     );
+
+    Ok(())
+}
+
+pub fn list_workflows(reporter: &Reporter) -> anyhow::Result<()> {
+    reporter.info("Listing available CI workflows");
+
+    for (ci_host, workflows) in WORKFLOW_TEMPATES.iter() {
+        println!("\nCI Host: {}", ci_host);
+        for (workflow_type, _, file_name) in workflows.iter() {
+            println!("  - {} (file: {})", workflow_type, file_name);
+        }
+    }
 
     Ok(())
 }

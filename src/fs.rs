@@ -69,7 +69,7 @@ impl FileSystem {
             if file_type.is_dir() {
                 self.copy_dir_recursive(&entry.path(), &dest_path)?;
             } else {
-                std::fs::copy(&entry.path(), dest_path)?;
+                self.copy_file(&entry.path(), &dest_path)?;
             }
         }
         Ok(())
@@ -90,5 +90,27 @@ impl FileSystem {
         }
 
         Ok(true)
+    }
+
+    pub fn remove_dir_recursive(&self, path: &Path) -> anyhow::Result<()> {
+        if self.dry_run {
+            println!("Dry run: would remove directory at {:?}", path);
+            return Ok(());
+        }
+
+        std::fs::remove_dir_all(path)
+            .with_context(|| format!("Failed to remove directory at {:?}", path))?;
+        Ok(())
+    }
+
+    pub fn copy_file(&self, src: &Path, dst: &Path) -> anyhow::Result<()> {
+        if self.dry_run {
+            println!("Dry run: would copy file from {:?} to {:?}", src, dst);
+            return Ok(());
+        }
+
+        std::fs::copy(src, dst)
+            .with_context(|| format!("Failed to copy file from {:?} to {:?}", src, dst))?;
+        Ok(())
     }
 }

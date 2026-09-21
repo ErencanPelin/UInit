@@ -1,4 +1,4 @@
-use clap::{Args, Parser, Subcommand};
+use clap::{Parser, Subcommand};
 
 use crate::enums::{AssetCategory, CiHost, ProjectType, WorkflowType};
 
@@ -40,8 +40,11 @@ pub enum Commands {
         #[arg(short, long)]
         email: Option<String>,
     },
-    /// Configure complex integrations (Steam, CI, etc.)
-    Setup(SetupArgs),
+    /// Configure Steamworks (requires App ID)
+    Steam {
+        #[arg(long)]
+        app_id: u32,
+    },
     /// Scaffold a new feature with Runtime, Editor, Tests assemblies
     Feature {
         /// Name of the feature/assembly
@@ -79,28 +82,10 @@ pub enum Commands {
         #[arg(short, long)]
         email: Option<String>,
     },
-}
-
-#[derive(Args)]
-pub struct SetupArgs {
-    #[command(subcommand)]
-    pub integration: Integration,
-}
-
-#[derive(Subcommand)]
-pub enum Integration {
-    /// Configure Steamworks (requires App ID)
-    Steam {
-        #[arg(long)]
-        app_id: u32,
-    },
     /// Configure CI Workflows (GitHub/GitLab)
     Ci {
-        #[arg(value_enum, short, long)]
-        host: CiHost,
-        /// The name of the workflow you want to create. Use --help to see available options.
-        #[arg(short, long)]
-        workflow: WorkflowType,
+        #[command(subcommand)]
+        action: CiActions,
     },
 }
 
@@ -132,5 +117,20 @@ pub enum RemotesActions {
     Remove {
         /// Alias to be removed
         alias: String,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum CiActions {
+    /// List all available workflows
+    List {},
+
+    /// Add a new alias mapping to the local config
+    Add {
+        #[arg(value_enum, long)]
+        host: CiHost,
+        /// The name of the workflow you want to create. Use --help to see available options.
+        #[arg(short, long)]
+        workflow: WorkflowType,
     },
 }

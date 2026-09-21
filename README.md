@@ -44,17 +44,17 @@ uinit init --template package --company ErencanPelin --email myemail@mailserver.
 
 ### To init steam
 ```sh
-uinit setup steam --app-id <APP_ID>
+uinit steam --app-id <APP_ID>
 # e.g. 480 = Spacewar
-uinit setup steam --app-id 480
+uinit steam --app-id 480
 ```
 
 ### To init a CI/CD workflow
 Currently only Github is supported.
 ```sh
-uinit setup ci <CI_HOST> <WORKFLOW_TYPE>
+uinit ci <CI_HOST> <WORKFLOW_TYPE>
 # e.g.
-uinit setup ci github editor-tests
+uinit ci github editor-tests
 ```
 
 ### To create a new feature domain

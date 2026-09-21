@@ -142,8 +142,7 @@ pub fn create_assembly_definition(
     }
 
     reporter.info("Writing to assembly file.");
-    std::fs::write(&full_path, rendered_content)
-        .with_context(|| format!("Failed to write asmdef to {:?}", full_path))?;
+    fs.write_to_file(&rendered_content, &full_path)?;
 
     Ok(assembly_name)
 }
