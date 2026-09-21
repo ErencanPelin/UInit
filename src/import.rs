@@ -3,13 +3,13 @@ use minijinja::Environment;
 use std::path::PathBuf;
 use std::{path::Path, process::Command};
 
-use crate::enums::AssetCategory;
-use crate::fs::FileSystem;
 use crate::{
     alias_registry::{AliasRegistry, RemoteResource, ResolvedResource},
     config::UinitConfig,
     constants::{self},
+    enums::AssetCategory,
     feature::create_assembly_definition,
+    fs::FileSystem,
     new_project::add_package,
     project_context::ProjectContext,
     reporter::Reporter,
@@ -69,7 +69,9 @@ pub fn handle_import(
                 AssetCategory::Module => {
                     import_module(&path, &ctx, &unity_project, &reporter, &fs, &resource)?
                 }
-                AssetCategory::Tool => import_tool(&path, &unity_project, &reporter, &resource)?,
+                AssetCategory::Tool => {
+                    import_tool(&path, &unity_project, &reporter, &fs, &resource)?
+                }
             }
 
             reporter.success(&format!(
@@ -89,6 +91,7 @@ fn import_tool(
     path: &Option<String>,
     unity_project: &UnityProject,
     reporter: &Reporter,
+    fs: &FileSystem,
     remote_resource: &RemoteResource,
 ) -> anyhow::Result<()> {
     // define default path
@@ -99,6 +102,7 @@ fn import_tool(
 
     fetch_file(
         &reporter,
+        &fs,
         &remote_resource.url,
         &remote_resource.path,
         &local_path,
@@ -187,19 +191,19 @@ fn fetch_directory(
     remote_folder_path: &str,
     local_dest_path: &Path,
 ) -> anyhow::Result<()> {
-    let temp_dir = ".uinit_temp";
+    let temp_dir: &Path = Path::new(".uinit_temp");
 
     // FIXME: we should always clean up the temp dir if a failure occurs anywhere in this function
     // cleanup old temp dir if it still exists (e.g. a mid failed process)
     reporter.info("Checking if temporary directory already exists.");
     if Path::new(temp_dir).exists() {
-        std::fs::remove_dir_all(temp_dir)?;
+        fs.remove_dir_recursive(&temp_dir)?;
     }
 
     // Initialize and add remote to a temp directory
     // We pull the repo into the temp directory then move files to the correct destination in the project
     reporter.info("Initialising new temp git repo.");
-    Command::new("git").args(["init", temp_dir]).output()?;
+    Command::new("git").arg("init").arg(temp_dir).output()?;
     let cmd_dir = Path::new(temp_dir);
 
     reporter.info("Writing git config.");
@@ -265,26 +269,29 @@ fn fetch_directory(
 
     // cleanup the temp directory
     reporter.info("Cleanup: Deleting temporary git repo.");
-    std::fs::remove_dir_all(temp_dir)?;
+    fs.remove_dir_recursive(temp_dir)?;
     Ok(())
 }
 
 fn fetch_file(
     reporter: &Reporter,
+    fs: &FileSystem,
     repo: &str,
     remote_file_path: &str,
     local_dest_dir: &Path,
 ) -> anyhow::Result<()> {
-    let temp_dir = ".uinit_temp";
+    let temp_dir: &Path = Path::new(".uinit_temp");
 
     reporter.info("Checking if temporary directory already exists.");
-    if Path::new(temp_dir).exists() {
-        std::fs::remove_dir_all(temp_dir).context("Failed to clean up old temp directory")?;
+    if temp_dir.exists() {
+        fs.remove_dir_recursive(temp_dir)
+            .context("Failed to clean up old temp directory")?;
     }
 
     reporter.info("Initialising new temp git repo.");
     Command::new("git")
-        .args(["init", temp_dir])
+        .arg("init")
+        .arg(&temp_dir)
         .output()
         .context("Failed to init git")?;
 
@@ -302,7 +309,7 @@ fn fetch_file(
 
     reporter.info("Initialising sparse-checkout new temp git repo.");
     let sparse_info = cmd_dir.join(".git/info/sparse-checkout");
-    std::fs::write(sparse_info, format!("{}\n", remote_file_path))?;
+    fs.write_to_file(&format!("{}\n", remote_file_path), &sparse_info)?;
 
     reporter.info("Downloading files from git remote...");
     run_git(&["pull", "--depth", "1", "origin", "HEAD"])?;
@@ -318,12 +325,10 @@ fn fetch_file(
     reporter.info("Making sure file exists locally.");
     if downloaded_file.is_file() {
         reporter.info("Creating target directory inside project.");
-        std::fs::create_dir_all(local_dest_dir)
-            .with_context(|| format!("Failed to create directory: {}", local_dest_dir.display()))?;
+        fs.create_dirs(local_dest_dir)?;
 
         reporter.info("Cpying downloading file into target directory inside project.");
-        std::fs::copy(&downloaded_file, &target_path)
-            .with_context(|| format!("Failed to copy file to {}", target_path.display()))?;
+        fs.copy_file(&downloaded_file, &target_path)?;
 
         reporter.success(&format!("Successfully imported: {}", target_path.display()));
     } else {
@@ -331,6 +336,6 @@ fn fetch_file(
     }
 
     reporter.info("Cleanup: Deleting temporary git repo.");
-    let _ = std::fs::remove_dir_all(temp_dir);
+    let _ = fs.remove_dir_recursive(temp_dir);
     Ok(())
 }

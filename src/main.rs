@@ -22,8 +22,7 @@ mod unity_project;
 mod version;
 
 use crate::{
-    ci::handle_ci,
-    cli::{Cli, Commands, Integration, RemotesActions},
+    cli::{CiActions, Cli, Commands, RemotesActions},
     constants::{DEFAULT_COMPANY, DEFAULT_EMAIL},
     doctor::handle_doctor,
     fs::FileSystem,
@@ -74,13 +73,14 @@ fn main() -> anyhow::Result<()> {
                     &project_template_registry,
                 )?;
             }
-            Commands::Setup(args) => match &args.integration {
-                Integration::Steam { app_id } => {
-                    let ctx = steam::SteamContext { app_id: *app_id };
-                    steam::init_steam(&ctx, &unity_project, &reporter, &fs)?;
-                }
-                Integration::Ci { host, workflow } => {
-                    handle_ci(&host, &workflow, &unity_project, &reporter, &fs)?
+            Commands::Steam { app_id } => {
+                let ctx = steam::SteamContext { app_id: *app_id };
+                steam::init_steam(&ctx, &unity_project, &reporter, &fs)?;
+            }
+            Commands::Ci { action } => match action {
+                CiActions::List {} => ci::list_workflows(&reporter)?,
+                CiActions::Add { host, workflow } => {
+                    ci::handle_add_ci_workflow(&host, &workflow, &unity_project, &reporter, &fs)?
                 }
             },
             Commands::Feature {
