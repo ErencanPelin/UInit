@@ -32,3 +32,11 @@ local-install: build
 # Tag the version currently in Cargo.toml and push it, triggering the release pipeline.
 publish:
     ./scripts/publish.sh
+
+# Init a package project into the test environment
+init-test-package:
+    cd .test-env && uinit init --template package MyTestPackage
+
+# Init a game project into the test environment
+init-test-game:
+    cd .test-env && uinit init --template game MyTestGame
