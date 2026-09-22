@@ -1,8 +1,12 @@
 use std::path::Path;
 
 use crate::{
-    config::UinitConfig, constants, fs::FileSystem, project_context::ProjectContext,
-    reporter::Reporter, unity_project::UnityProject,
+    config::UinitConfig,
+    constants,
+    fs::FileSystem,
+    project_context::{self, ProjectContext},
+    reporter::Reporter,
+    unity_project::UnityProject,
 };
 use anyhow::{Context, bail};
 use minijinja::{Environment, context};
@@ -12,20 +16,17 @@ pub fn init_feature(
     no_editor: bool,
     no_tests: bool,
     unity_project: &UnityProject,
+    project_context: &ProjectContext,
     reporter: &Reporter,
     fs: &FileSystem,
 ) -> anyhow::Result<()> {
-    println!("🚀 Uinit: Adding {} feature module...", feature_name);
-
-    reporter.info("Getting project context from uinit.toml");
-    let config = UinitConfig::load(&unity_project.root)?;
-    let ctx: ProjectContext = ProjectContext::from_config(&config);
+    println!("🛠️ Uinit: Adding {} feature module...", feature_name);
 
     // Create folders for feature domain inside /Assets/<ProjectName>/Scripts
     reporter.info("Creating folders for feature.");
     let feature_folder = unity_project
         .root
-        .join(format!("Assets/{}/Scripts", ctx.project_name))
+        .join(format!("Assets/{}/Scripts", project_context.project_name))
         .join(feature_name);
 
     if feature_folder.exists() {
@@ -47,7 +48,7 @@ pub fn init_feature(
     let runtime_assembly_name = create_assembly_definition(
         &runtime_folder,
         constants::ASSEMBLY_DEF_RUNTIME_JINJA,
-        &ctx,
+        &project_context,
         &reporter,
         &fs,
         "runtime",
@@ -67,7 +68,7 @@ pub fn init_feature(
         create_assembly_definition(
             &editor_folder,
             constants::ASSEMBLY_DEF_EDITOR_JINJA,
-            &ctx,
+            &project_context,
             &reporter,
             &fs,
             "editor",
@@ -88,7 +89,7 @@ pub fn init_feature(
         create_assembly_definition(
             &tests_folder,
             constants::ASSEMBLY_DEF_TESTS_JINJA,
-            &ctx,
+            &project_context,
             &reporter,
             &fs,
             "tests",

@@ -22,7 +22,9 @@ mod unity_project;
 mod version;
 
 use crate::{
+    alias_registry::AliasRegistry,
     cli::{CiActions, Cli, Commands, RemotesActions},
+    config::UinitConfig,
     constants::{DEFAULT_COMPANY, DEFAULT_EMAIL},
     doctor::handle_doctor,
     fs::FileSystem,
@@ -39,88 +41,130 @@ fn main() -> anyhow::Result<()> {
     let fs = FileSystem::new(cli.dry_run);
     let project_template_registry = ProjectTemplateRegistry::load();
 
-    if let Commands::Config { company, email } = &cli.command {
-        global_config::handle_config(company.clone(), email.clone(), &reporter, &fs)?;
-    } else {
-        let unity_project = UnityProject::detect()?;
-        let global_config = global_config::GlobalConfig::load()?;
-        match &cli.command {
-            Commands::Init {
-                name,
-                template,
-                company,
-                email,
-            } => {
-                let ctx = ProjectContext {
-                    project_type: template.clone(),
-                    project_name: name.to_string(),
-                    // Clone the string if it exists, otherwise use the default
-                    company: company
-                        .clone()
-                        .or_else(|| global_config.company.clone())
-                        .unwrap_or_else(|| DEFAULT_COMPANY.to_string()),
-                    email: email
-                        .clone()
-                        .or_else(|| global_config.email.clone())
-                        .unwrap_or_else(|| DEFAULT_EMAIL.to_string()),
-                    year: chrono::Utc::now().year(),
-                };
-                init_project(
-                    &ctx,
-                    &unity_project,
-                    &reporter,
-                    &fs,
-                    &project_template_registry,
-                )?;
-            }
-            Commands::Steam { app_id } => {
-                let ctx = steam::SteamContext { app_id: *app_id };
-                steam::init_steam(&ctx, &unity_project, &reporter, &fs)?;
-            }
-            Commands::Ci { action } => match action {
-                CiActions::List {} => ci::list_workflows(&reporter)?,
-                CiActions::Add { host, workflow } => {
-                    ci::handle_add_ci_workflow(&host, &workflow, &unity_project, &reporter, &fs)?
-                }
-            },
-            Commands::Feature {
-                name,
-                no_editor,
-                no_tests,
-            } => {
-                feature::init_feature(name, *no_editor, *no_tests, &unity_project, &reporter, &fs)?;
-            }
-            Commands::Import { alias, path } => {
-                import::handle_import(alias, &path, &unity_project, &reporter, &fs)?;
-            }
-            Commands::Remote { action } => match action {
-                RemotesActions::List {} => remotes::list_aliases(&unity_project, &reporter)?,
-                RemotesActions::Add {
-                    alias,
-                    repo,
-                    path,
-                    category,
-                } => remotes::add_alias(
-                    &alias,
-                    &repo,
-                    &path,
-                    &category,
-                    &unity_project,
-                    &reporter,
-                    &fs,
-                )?,
-                RemotesActions::Remove { alias } => {
-                    remotes::remove_alias(&alias, &unity_project, &reporter, &fs)?
-                }
-            },
-            Commands::Doctor { fix } => handle_doctor(
+    match &cli.command {
+        Commands::Config { company, email } => {
+            global_config::handle_config(company.clone(), email.clone(), &reporter, &fs)?;
+        }
+
+        Commands::Init {
+            name,
+            template,
+            company,
+            email,
+        } => {
+            let global_config = global_config::GlobalConfig::load(&reporter)?;
+            let unity_project = UnityProject::detect(&reporter)?;
+
+            let project_context = ProjectContext {
+                project_type: template.clone(),
+                project_name: name.to_string(),
+                // Clone the string if it exists, otherwise use the default
+                company: company
+                    .clone()
+                    .or_else(|| global_config.company.clone())
+                    .unwrap_or_else(|| DEFAULT_COMPANY.to_string()),
+                email: email
+                    .clone()
+                    .or_else(|| global_config.email.clone())
+                    .unwrap_or_else(|| DEFAULT_EMAIL.to_string()),
+                year: chrono::Utc::now().year(),
+            };
+
+            init_project(
+                &project_context,
                 &unity_project,
                 &reporter,
                 &fs,
-                *fix,
                 &project_template_registry,
-            )?,
-            Commands::Config { .. } => unreachable!("handled above"),
+            )?;
+        }
+
+        _ => {
+            let global_config = global_config::GlobalConfig::load(&reporter)?;
+            let unity_project = UnityProject::detect(&reporter)?;
+            let uinit_config = UinitConfig::load(&unity_project.root, &reporter)?;
+            let project_context = ProjectContext::from_config(&uinit_config);
+            let alias_registry = AliasRegistry::load(&uinit_config, &reporter);
+
+            match &cli.command {
+                Commands::Steam { app_id } => {
+                    let steam_context = steam::SteamContext { app_id: *app_id };
+                    steam::init_steam(&steam_context, &unity_project, &reporter, &fs)?;
+                }
+
+                Commands::Ci { action } => match action {
+                    CiActions::List {} => ci::list_workflows(&reporter)?,
+                    CiActions::Add { host, workflow } => ci::handle_add_ci_workflow(
+                        &host,
+                        &workflow,
+                        &unity_project,
+                        &reporter,
+                        &fs,
+                    )?,
+                },
+
+                Commands::Feature {
+                    name,
+                    no_editor,
+                    no_tests,
+                } => {
+                    feature::init_feature(
+                        name,
+                        *no_editor,
+                        *no_tests,
+                        &unity_project,
+                        &project_context,
+                        &reporter,
+                        &fs,
+                    )?;
+                }
+
+                Commands::Import { alias, path } => {
+                    import::handle_import(
+                        alias,
+                        &path,
+                        &unity_project,
+                        &project_context,
+                        &alias_registry,
+                        &reporter,
+                        &fs,
+                    )?;
+                }
+
+                Commands::Remote { action } => match action {
+                    RemotesActions::List {} => {
+                        remotes::list_aliases(&unity_project, &alias_registry, &reporter)?
+                    }
+                    RemotesActions::Add {
+                        alias,
+                        repo,
+                        path,
+                        category,
+                    } => remotes::add_alias(
+                        &alias,
+                        &repo,
+                        &path,
+                        &category,
+                        &unity_project,
+                        &reporter,
+                        &fs,
+                    )?,
+                    RemotesActions::Remove { alias } => {
+                        remotes::remove_alias(&alias, &unity_project, &reporter, &fs)?
+                    }
+                },
+
+                Commands::Doctor { fix } => handle_doctor(
+                    &unity_project,
+                    &project_context,
+                    &reporter,
+                    &fs,
+                    *fix,
+                    &project_template_registry,
+                )?,
+
+                Commands::Init { .. } | Commands::Config { .. } => unreachable!("handled above."),
+            }
         }
     }
 

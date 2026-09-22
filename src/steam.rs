@@ -8,12 +8,12 @@ pub struct SteamContext {
 }
 
 pub fn init_steam(
-    ctx: &SteamContext,
+    steam_context: &SteamContext,
     unity_project: &UnityProject,
     reporter: &Reporter,
     fs: &FileSystem,
 ) -> anyhow::Result<()> {
-    println!("🚀 Uinit: Initialising steam...");
+    println!("🛠️ Uinit: Initialising steam...");
 
     // Create steam_appid.txt in the root of the Unity project
     let steam_appid_path = unity_project.root.join("steam_appid.txt");
@@ -23,21 +23,21 @@ pub fn init_steam(
     if fs.create_file(&steam_appid_path)? {
         reporter.success(&format!(
             "Created steam_appid.txt with AppID: {}",
-            ctx.app_id
+            steam_context.app_id
         ));
     } else {
         // it was successful (no errors) but wasn't created (already existed)
         reporter.success(&format!(
             "steam_appid.txt with AppID: {} already exists.",
-            ctx.app_id
+            steam_context.app_id
         ));
     }
 
     reporter.info("Writing to steam_appid.txt file.");
-    if fs.write_to_file(&ctx.app_id.to_string(), &steam_appid_path)? {
+    if fs.write_to_file(&steam_context.app_id.to_string(), &steam_appid_path)? {
         reporter.success(&format!(
             "Synced steam_appid.txt with AppID: {}",
-            ctx.app_id
+            steam_context.app_id
         ));
     }
 

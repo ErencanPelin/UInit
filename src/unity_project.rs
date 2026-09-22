@@ -1,11 +1,15 @@
 use std::path::Path;
 
+use crate::reporter::Reporter;
+
 pub struct UnityProject {
     pub root: std::path::PathBuf,
 }
 
 impl UnityProject {
-    pub fn detect() -> anyhow::Result<Self> {
+    pub fn detect(reporter: &Reporter) -> anyhow::Result<Self> {
+        reporter.info("Validating current working directory");
+
         let cwd = std::env::current_dir()?;
 
         if cwd.join("Assets").exists() && cwd.join("ProjectSettings").exists() {

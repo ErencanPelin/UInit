@@ -1,7 +1,6 @@
 use anyhow::{Context, Ok};
 
 use crate::{
-    config::UinitConfig,
     fs::FileSystem,
     new_project::{add_package, get_project_packages},
     project_context::ProjectContext,
@@ -12,31 +11,28 @@ use crate::{
 
 pub fn handle_doctor(
     unity_project: &UnityProject,
+    project_context: &ProjectContext,
     reporter: &Reporter,
     fs: &FileSystem,
     fix: bool,
     project_template_registry: &ProjectTemplateRegistry,
 ) -> anyhow::Result<()> {
     println!(
-        "🚀 Uinit: Running doctor with auto-fix set to '{}' ...",
+        "🛠️ Uinit: Running doctor with auto-fix set to '{}' ...",
         fix
     );
-
-    reporter.info("Loading uinit.toml config file");
-    let config = UinitConfig::load(&unity_project.root)?;
-    let ctx = ProjectContext::from_config(&config);
 
     // 2. Run Checks
     // We collect them into a list so we can iterate and report uniformly
     let results = [
         (
             "Project Settings",
-            validate_project_settings(&ctx, unity_project, reporter, fix)?,
+            validate_project_settings(&project_context, unity_project, reporter, fix)?,
         ),
         (
             "Project Structure",
             validate_project_structure(
-                &ctx,
+                &project_context,
                 &unity_project,
                 &reporter,
                 &fs,

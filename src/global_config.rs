@@ -25,7 +25,9 @@ impl GlobalConfig {
         }
     }
 
-    pub fn load() -> anyhow::Result<Self> {
+    pub fn load(reporter: &Reporter) -> anyhow::Result<Self> {
+        reporter.info("Loading global Uinit config");
+
         match Self::default_config_path() {
             Some(path) => Self::load_from(&path),
             None => Ok(Self::default()), // no config dir available, fall back to default config
