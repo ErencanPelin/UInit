@@ -2,7 +2,7 @@ use anyhow::bail;
 use comfy_table::Table;
 
 use crate::{
-    alias_registry::{AliasRegistry, RemoteResource},
+    alias_registry::{self, AliasRegistry, RemoteResource},
     config::UinitConfig,
     enums::AssetCategory,
     fs::FileSystem,
@@ -10,22 +10,21 @@ use crate::{
     unity_project::UnityProject,
 };
 
-pub fn list_aliases(unity_project: &UnityProject, reporter: &Reporter) -> anyhow::Result<()> {
-    reporter.info("Loading uinit.toml file");
-    let config: UinitConfig = UinitConfig::load(&unity_project.root)?;
-    reporter.info("Loading default_aliases.toml file");
-    let registry = AliasRegistry::load(&config);
-
+pub fn list_aliases(
+    unity_project: &UnityProject,
+    alias_registry: &AliasRegistry,
+    reporter: &Reporter,
+) -> anyhow::Result<()> {
     reporter.info("Creating table...");
     let mut table = Table::new();
 
     table.set_header(vec!["Alias", "Category", "Repo Path", "Repo URL"]);
 
-    let mut keys: Vec<_> = registry.remotes.keys().collect();
+    let mut keys: Vec<_> = alias_registry.remotes.keys().collect();
     keys.sort();
 
     for name in keys {
-        let entry = &registry.remotes[name];
+        let entry = &alias_registry.remotes[name];
         table.add_row(vec![
             name,
             &entry.category.to_string(),
@@ -48,7 +47,7 @@ pub fn add_alias(
     fs: &FileSystem,
 ) -> anyhow::Result<()> {
     reporter.info("Loading uinit.toml file");
-    let mut config: UinitConfig = UinitConfig::load(&unity_project.root)?;
+    let mut config: UinitConfig = UinitConfig::load(&unity_project.root, &reporter)?;
 
     println!("Adding custom alias '{}' to uinit.toml...", alias);
 
@@ -89,7 +88,7 @@ pub fn remove_alias(
     fs: &FileSystem,
 ) -> anyhow::Result<()> {
     reporter.info("Loading uinit.toml file");
-    let mut config: UinitConfig = UinitConfig::load(&unity_project.root)?;
+    let mut config: UinitConfig = UinitConfig::load(&unity_project.root, &reporter)?;
 
     println!("Removing custom alias '{}' from uinit.toml...", alias);
 

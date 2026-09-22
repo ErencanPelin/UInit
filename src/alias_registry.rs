@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use crate::{config::UinitConfig, enums::AssetCategory};
+use crate::{config::UinitConfig, enums::AssetCategory, reporter::Reporter};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Bundle {
@@ -37,7 +37,9 @@ pub struct AliasRegistry {
 }
 
 impl AliasRegistry {
-    pub fn load(config: &UinitConfig) -> Self {
+    pub fn load(config: &UinitConfig, reporter: &Reporter) -> Self {
+        reporter.info("Loading alias registry");
+
         let defaults_str = include_str!("./resources/default_aliases.toml");
         let mut registry: AliasRegistry = toml::from_str(defaults_str)
             .expect("Critical Error: Failed to parse embedded default_aliases.toml");

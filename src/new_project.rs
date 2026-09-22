@@ -22,7 +22,7 @@ pub fn init_project(
     project_template_registry: &ProjectTemplateRegistry,
 ) -> anyhow::Result<()> {
     println!(
-        "🚀 Uinit: Initialising '{}' with '{}' template...",
+        "🛠️ Uinit: Initialising '{}' with '{}' template...",
         ctx.project_name, ctx.project_type
     );
 

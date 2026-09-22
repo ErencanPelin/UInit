@@ -2,7 +2,10 @@ use anyhow::Context;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
-use crate::{alias_registry::AliasRegistry, fs::FileSystem, project_context::ProjectContext};
+use crate::{
+    alias_registry::AliasRegistry, fs::FileSystem, project_context::ProjectContext,
+    reporter::Reporter,
+};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UinitConfig {
@@ -11,7 +14,9 @@ pub struct UinitConfig {
 }
 
 impl UinitConfig {
-    pub fn load(dir: &Path) -> anyhow::Result<Self> {
+    pub fn load(dir: &Path, reporter: &Reporter) -> anyhow::Result<Self> {
+        reporter.info("Loading local uinit.toml file");
+
         let path = dir.join("uinit.toml");
         let text = std::fs::read_to_string(&path).or_else(|e| {
             if e.kind() == std::io::ErrorKind::NotFound {

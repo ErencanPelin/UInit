@@ -3,6 +3,7 @@ use minijinja::Environment;
 use std::path::PathBuf;
 use std::{path::Path, process::Command};
 
+use crate::project_context;
 use crate::{
     alias_registry::{AliasRegistry, RemoteResource, ResolvedResource},
     config::UinitConfig,
@@ -20,13 +21,11 @@ pub fn handle_import(
     alias: &str,
     path: &Option<String>,
     unity_project: &UnityProject,
+    project_context: &ProjectContext,
+    alias_registry: &AliasRegistry,
     reporter: &Reporter,
     fs: &FileSystem,
 ) -> anyhow::Result<()> {
-    let config = UinitConfig::load(&unity_project.root)?;
-    let ctx = ProjectContext::from_config(&config);
-    let alias_registry = AliasRegistry::load(&config);
-
     match alias_registry.resolve_alias(alias) {
         Some(ResolvedResource::Bundle(deps)) => {
             let confirmation = reporter.prompt(&format!(
@@ -63,12 +62,22 @@ pub fn handle_import(
             );
 
             match resource.category {
-                AssetCategory::Util => {
-                    import_util(&path, &ctx, &unity_project, &reporter, &fs, &resource)?
-                }
-                AssetCategory::Module => {
-                    import_module(&path, &ctx, &unity_project, &reporter, &fs, &resource)?
-                }
+                AssetCategory::Util => import_util(
+                    &path,
+                    &project_context,
+                    &unity_project,
+                    &reporter,
+                    &fs,
+                    &resource,
+                )?,
+                AssetCategory::Module => import_module(
+                    &path,
+                    &project_context,
+                    &unity_project,
+                    &reporter,
+                    &fs,
+                    &resource,
+                )?,
                 AssetCategory::Tool => {
                     import_tool(&path, &unity_project, &reporter, &fs, &resource)?
                 }
