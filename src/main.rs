@@ -132,9 +132,7 @@ fn main() -> anyhow::Result<()> {
                 }
 
                 Commands::Remote { action } => match action {
-                    RemotesActions::List {} => {
-                        remotes::list_aliases(&unity_project, &alias_registry, &reporter)?
-                    }
+                    RemotesActions::List {} => remotes::list_aliases(&alias_registry, &reporter)?,
                     RemotesActions::Add {
                         alias,
                         repo,

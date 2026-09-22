@@ -1,11 +1,7 @@
 use std::path::Path;
 
 use crate::{
-    config::UinitConfig,
-    constants,
-    fs::FileSystem,
-    project_context::{self, ProjectContext},
-    reporter::Reporter,
+    constants, fs::FileSystem, project_context::ProjectContext, reporter::Reporter,
     unity_project::UnityProject,
 };
 use anyhow::{Context, bail};

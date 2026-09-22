@@ -2,7 +2,7 @@ use anyhow::bail;
 use comfy_table::Table;
 
 use crate::{
-    alias_registry::{self, AliasRegistry, RemoteResource},
+    alias_registry::{AliasRegistry, RemoteResource},
     config::UinitConfig,
     enums::AssetCategory,
     fs::FileSystem,
@@ -10,11 +10,7 @@ use crate::{
     unity_project::UnityProject,
 };
 
-pub fn list_aliases(
-    unity_project: &UnityProject,
-    alias_registry: &AliasRegistry,
-    reporter: &Reporter,
-) -> anyhow::Result<()> {
+pub fn list_aliases(alias_registry: &AliasRegistry, reporter: &Reporter) -> anyhow::Result<()> {
     reporter.info("Creating table...");
     let mut table = Table::new();
 

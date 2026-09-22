@@ -3,10 +3,8 @@ use minijinja::Environment;
 use std::path::PathBuf;
 use std::{path::Path, process::Command};
 
-use crate::project_context;
 use crate::{
     alias_registry::{AliasRegistry, RemoteResource, ResolvedResource},
-    config::UinitConfig,
     constants::{self},
     enums::AssetCategory,
     feature::create_assembly_definition,
