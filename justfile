@@ -40,3 +40,9 @@ init-test-package:
 # Init a game project into the test environment
 init-test-game:
     cd .test-env && uinit init --template game MyTestGame
+
+# Format, lint, etc
+check:
+    cargo fmt --all
+    cargo check --all -q --locked
+    cargo clippy

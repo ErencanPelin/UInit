@@ -1,0 +1,16 @@
+{
+  "allowUnsafeCode": false,
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "excludePlatforms": [],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "name": "Eren.Uinit.EditorTools",
+  "noEngineReferences": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "references": [],
+  "rootNamespace": "Uinit.EditorTools",
+  "versionDefines": []
+}

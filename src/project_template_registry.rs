@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{alias_registry::Dependency, enums::ProjectType};
+use crate::{alias::Dependency, enums::ProjectType};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ProjectTemplate {

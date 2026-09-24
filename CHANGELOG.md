@@ -5,12 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0-Unreleased] - 2026-09-24
+### Added
+- Embedded Modules/Utils that are not downloaded when added, they are embedded into the binary so that you don't require an internet connection to use them
+- You can now specify where to add a module using the `--path` argument. By default they are added to the `/Scripts` folder
+### Changed
+- There are no longer different types of imports (util/module/tool) everything is treated as a module instead
+### Removed
+- Custom aliases are removed, instead you can now import a folder or file from git directly from its url
+- You can no longer manage custom bundles by editing your uinit.toml. Instead Bundles are predefined and included in this tool's binary. If you wish for a bundle to be added,
+you can raise an issue.
+### Fixed
+- Importing and downloaded external modules would always pull the folder on the `master/main` branch even if you were trying to pull from a specific branch, this has now been fixed
+
+
 ## [1.0.3] - 2026-09-22
 ### Changed
 - Flattened `setup` command. You no longer have to type `uinit setup ci ...`, you can just type `uinit ci ...`
 ### Fixed
 - Steam command was not adhering to dry run mode
 - Import command was not adhering to dry run mode 
+
 
 ## [1.0.2] - 2026-09-20
 ### Added

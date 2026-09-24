@@ -1,0 +1,14 @@
+{
+  "allowUnsafeCode": false,
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "excludePlatforms": [],
+  "includePlatforms": [],
+  "name": "Eren.Uinit.Core",
+  "noEngineReferences": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "references": [],
+  "rootNamespace": "Uinit.Core",
+  "versionDefines": []
+}
