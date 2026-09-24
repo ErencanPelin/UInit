@@ -2,15 +2,11 @@ use anyhow::Context;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
-use crate::{
-    alias_registry::AliasRegistry, fs::FileSystem, project_context::ProjectContext,
-    reporter::Reporter,
-};
+use crate::{fs::FileSystem, project_context::ProjectContext, reporter::Reporter};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UinitConfig {
     pub project: ProjectContext,
-    pub custom_aliases: AliasRegistry,
 }
 
 impl UinitConfig {

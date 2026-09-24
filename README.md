@@ -66,55 +66,27 @@ uinit feature MyNewFeature
 ```
 
 ### To import predefined tool scripts, utils or feature modules
+A bundle is a group of dependencies and a module is an assembly of scripts. These are predefined and included in this tool's binary.
+Raise an issue if you'd like more dependencies or modules added to the tool. You can also use `uinit import` to directory import code from GitHub.
 ```sh
 # list all aliases for remotes
-uinit remote list
+uinit alias list
 
-# import a remote tool/feature/util by its alias
-uinit import <ALIAS>
+# import a bundle or module by its alias
+uinit add <ALIAS>
 # e.g.
-uinit import statemachines
-```
+uinit add core
 
-### To add or customise your own aliases and point them to your own code
-```sh
-# add a custom alias or alias override for a remote
-uinit remote add --repo <REPO_HTTP_URL> --path <PATH_TO_MODULE_FROM_REPO_ROOT> --category <UTIL | TOOL | MODULE> <ALIAS_NAME>
+# import a remote file or directory by its Github url. Path is the project level path the file/directory will be copied into
+uinit import <GITHUB URL> --path <PATH>
 # e.g.
-uinit remote add --repo https://github.com/ErencanPelin/Unity-Utils --path /Utils/Core --category util core-utils
-
-# remove a custom alias or alias override for a remote
-uinit remote rm <ALIAS_NAME>
-# e.g.
-uinit remote rm core-utils
-
-# list available remote aliases
-uinit remote list
-```
-
-### Defining custom dependency bundles in your uinit.toml
-You can add custom dependencies by adding to your `custom_bundles` in your uinit.toml in your project's root.
-```toml
-# define a block like this:
-[custom_aliases.bundles.<ALIAS>]
-dependencies = [
-    { name = "<PACKAGE_NAME>", version = "<VERSION>" },
-    { name = "<PACKAGE_NAME>", version = "<VERSION>" }
-]
-
-# for example:
-[custom_aliases.bundles.mybundle]
-dependencies = [
-    { name = "com.unity.textmeshpro", version = "3.0.6" },
-    { name = "com.unity.ui", version = "1.0.0" }
-]
+uinit import https://github.com/ErencanPelin/Unity-Utils/tree/master/Tools/ --path Assets/MyTestGame/Scripts/Tools
 ```
 
 ### Check general health of Unity Project
 ```sh
 uinit doctor
 ```
-
 
 ### Optional Global Flags
 |Flag|Description|

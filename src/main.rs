@@ -1,12 +1,13 @@
 use chrono::Datelike;
 use clap::Parser;
 
-mod alias_registry;
+mod alias;
 mod ci;
 mod cli;
 mod config;
 mod constants;
 mod doctor;
+mod embedded_resources;
 mod enums;
 mod feature;
 mod fs;
@@ -22,8 +23,8 @@ mod unity_project;
 mod version;
 
 use crate::{
-    alias_registry::AliasRegistry,
-    cli::{CiActions, Cli, Commands, RemotesActions},
+    alias::AliasRegistry,
+    cli::{AliasActions, CiActions, Cli, Commands},
     config::UinitConfig,
     constants::{DEFAULT_COMPANY, DEFAULT_EMAIL},
     doctor::handle_doctor,
@@ -80,11 +81,10 @@ fn main() -> anyhow::Result<()> {
         }
 
         _ => {
-            let global_config = global_config::GlobalConfig::load(&reporter)?;
             let unity_project = UnityProject::detect(&reporter)?;
             let uinit_config = UinitConfig::load(&unity_project.root, &reporter)?;
             let project_context = ProjectContext::from_config(&uinit_config);
-            let alias_registry = AliasRegistry::load(&uinit_config, &reporter);
+            let alias_registry = AliasRegistry::load();
 
             match &cli.command {
                 Commands::Steam { app_id } => {
@@ -119,37 +119,22 @@ fn main() -> anyhow::Result<()> {
                     )?;
                 }
 
-                Commands::Import { alias, path } => {
-                    import::handle_import(
-                        alias,
-                        &path,
-                        &unity_project,
-                        &project_context,
-                        &alias_registry,
-                        &reporter,
-                        &fs,
-                    )?;
+                Commands::Add { target, path } => import::handle_add(
+                    target,
+                    path,
+                    &unity_project,
+                    &project_context,
+                    &alias_registry,
+                    &reporter,
+                    &fs,
+                )?,
+
+                Commands::Import { url, path } => {
+                    import::handle_import(&url, &path, &reporter, &fs)?;
                 }
 
-                Commands::Remote { action } => match action {
-                    RemotesActions::List {} => remotes::list_aliases(&alias_registry, &reporter)?,
-                    RemotesActions::Add {
-                        alias,
-                        repo,
-                        path,
-                        category,
-                    } => remotes::add_alias(
-                        &alias,
-                        &repo,
-                        &path,
-                        &category,
-                        &unity_project,
-                        &reporter,
-                        &fs,
-                    )?,
-                    RemotesActions::Remove { alias } => {
-                        remotes::remove_alias(&alias, &unity_project, &reporter, &fs)?
-                    }
+                Commands::Alias { action } => match action {
+                    AliasActions::List {} => remotes::list_aliases(&alias_registry, &reporter)?,
                 },
 
                 Commands::Doctor { fix } => handle_doctor(

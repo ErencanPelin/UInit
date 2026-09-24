@@ -1,0 +1,3 @@
+[embedded]
+core = "core"
+tools = "tools"

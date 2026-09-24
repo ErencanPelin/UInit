@@ -3,10 +3,11 @@ use minijinja::Environment;
 use std::path::PathBuf;
 use std::{path::Path, process::Command};
 
+use crate::cli::AddTarget;
+use crate::embedded_resources::{CoreModuleAssets, ToolsModuleAssets};
 use crate::{
-    alias_registry::{AliasRegistry, RemoteResource, ResolvedResource},
+    alias::{AliasRegistry, EmbeddedModule},
     constants::{self},
-    enums::AssetCategory,
     feature::create_assembly_definition,
     fs::FileSystem,
     new_project::add_package,
@@ -15,8 +16,8 @@ use crate::{
     unity_project::UnityProject,
 };
 
-pub fn handle_import(
-    alias: &str,
+pub fn handle_add(
+    target: &AddTarget,
     path: &Option<String>,
     unity_project: &UnityProject,
     project_context: &ProjectContext,
@@ -24,258 +25,278 @@ pub fn handle_import(
     reporter: &Reporter,
     fs: &FileSystem,
 ) -> anyhow::Result<()> {
-    match alias_registry.resolve_alias(alias) {
-        Some(ResolvedResource::Bundle(deps)) => {
-            let confirmation = reporter.prompt(&format!(
-                "This will add {} packages from the '{}' bundle.\n
-                    Are you sure?",
-                deps.len(),
-                alias
-            ));
-
-            if !confirmation {
-                return Ok(());
-            }
-
-            for dep in &deps {
-                add_package(&unity_project, &reporter, &fs, &dep.name, &dep.version)?;
-            }
-
-            reporter.success(&format!("Successfully added {} packages.", deps.len()));
+    if let Some(name) = &target.bundle {
+        reporter.info("Adding bundle...");
+        let bundle = alias_registry.resolve_bundle(name).ok_or_else(|| {
+            anyhow::anyhow!("Bundle '{}' not found. Run 'uinit alias list'.", name)
+        })?;
+        for dep in &bundle.dependencies {
+            add_package(unity_project, reporter, fs, &dep.name, &dep.version)?;
         }
-        Some(ResolvedResource::Remote(resource)) => {
-            let confirmation = reporter.prompt(&format!(
-                "This will add all files and folders in {} from the repo {}.\n
-        Are you sure?",
-                resource.path, resource.url
-            ));
 
-            if !confirmation {
-                return Ok(());
-            }
-
-            println!(
-                "Adding '{}' from repo '{}' at path '{}'",
-                alias, resource.url, resource.path
-            );
-
-            match resource.category {
-                AssetCategory::Util => import_util(
-                    &path,
-                    &project_context,
-                    &unity_project,
-                    &reporter,
-                    &fs,
-                    &resource,
-                )?,
-                AssetCategory::Module => import_module(
-                    &path,
-                    &project_context,
-                    &unity_project,
-                    &reporter,
-                    &fs,
-                    &resource,
-                )?,
-                AssetCategory::Tool => {
-                    import_tool(&path, &unity_project, &reporter, &fs, &resource)?
-                }
-            }
-
-            reporter.success(&format!(
-                "Successfully added {} '{}' from {}:{:?}",
-                resource.category, alias, resource.url, resource.path
-            ));
-        }
-        None => anyhow::bail!(
-            "Alias '{}' not found in configuration. Check your 'uinit.toml' or use 'uinit alias list' to see available aliases.",
-            alias
-        ),
+        reporter.success(&format!(
+            "Successfully added all dependencies in bundle '{}'",
+            name
+        ));
+        return Ok(());
     }
-    Ok(())
-}
 
-fn import_tool(
-    path: &Option<String>,
-    unity_project: &UnityProject,
-    reporter: &Reporter,
-    fs: &FileSystem,
-    remote_resource: &RemoteResource,
-) -> anyhow::Result<()> {
-    // define default path
-    let local_path = path
+    reporter.info("Adding embedded module...");
+    let name = target
+        .module
         .as_ref()
-        .map(PathBuf::from)
-        .unwrap_or_else(|| unity_project.root.join("Tools"));
+        .expect("ArgGroup guarantees one of bundle/module");
 
-    fetch_file(
-        &reporter,
-        &fs,
-        &remote_resource.url,
-        &remote_resource.path,
-        &local_path,
-    )?;
+    let source = &alias_registry
+        .resolve_module(name)
+        .ok_or_else(|| anyhow::anyhow!("Module '{}' not found. Run 'uinit alias list'.", name))?;
 
-    Ok(())
-}
-
-fn import_module(
-    path: &Option<String>,
-    ctx: &ProjectContext,
-    unity_project: &UnityProject,
-    reporter: &Reporter,
-    fs: &FileSystem,
-    remote_resource: &RemoteResource,
-) -> anyhow::Result<()> {
-    // define default path
     let local_path = path.as_ref().map(PathBuf::from).unwrap_or_else(|| {
         unity_project
             .assets_dir()
-            .join(&ctx.project_name)
+            .join(&project_context.project_name)
             .join("Scripts")
+            .join(source.folder_name())
     });
 
-    fetch_directory(
-        &reporter,
-        &fs,
-        &remote_resource.url,
-        &remote_resource.path,
+    reporter.info(&format!(
+        "Copying embedded files to destination: {:?}",
+        &local_path
+    ));
+
+    match source {
+        EmbeddedModule::Core => write_embedded_files::<CoreModuleAssets>(&local_path, fs)?,
+        EmbeddedModule::Tools => write_embedded_files::<ToolsModuleAssets>(&local_path, fs)?,
+    }
+
+    reporter.info("Creating assembly definition file if one does not already exist");
+    ensure_assembly(
         &local_path,
+        &project_context,
+        reporter,
+        fs,
+        &Environment::new(),
     )?;
+
+    reporter.success(&format!(
+        "Successfully added embedded module '{}' to project at {:?}",
+        name, &local_path
+    ));
 
     Ok(())
 }
 
-fn import_util(
-    path: &Option<String>,
-    ctx: &ProjectContext,
-    unity_project: &UnityProject,
+pub fn handle_import(
+    url: &str,
+    path: &str,
     reporter: &Reporter,
     fs: &FileSystem,
-    remote_resource: &RemoteResource,
 ) -> anyhow::Result<()> {
-    // define default path
-    let local_path = path.as_ref().map(PathBuf::from).unwrap_or_else(|| {
-        unity_project
-            .assets_dir()
-            .join(&ctx.project_name)
-            .join("Scripts/Utils")
-    });
+    let target = parse_github_url(url)?;
+    let dest = PathBuf::from(path);
 
-    fetch_directory(
-        &reporter,
-        &fs,
-        &remote_resource.url,
-        &remote_resource.path,
-        &local_path,
-    )?;
+    let confirmation = reporter.prompt(&format!(
+        "This will import from '{}' into '{}'.\nAre you sure?",
+        url, path
+    ));
+    if !confirmation {
+        return Ok(());
+    }
 
-    // create assembly definition for the utils folder if it doesn't exist
-    let assembly_name_file_name =
-        format!("com.{}.{}.utils.asmdef", ctx.company, ctx.project_name).to_lowercase();
+    match target {
+        GitHubTarget::Directory {
+            repo_url,
+            branch,
+            path_in_repo,
+        } => fetch_directory(reporter, fs, &repo_url, &branch, &path_in_repo, &dest)?,
+        GitHubTarget::File {
+            repo_url,
+            branch,
+            path_in_repo,
+        } => fetch_file(reporter, fs, &repo_url, &branch, &path_in_repo, &dest)?,
+    }
 
-    let assembly_path = &local_path.join(&assembly_name_file_name);
-    if !assembly_path.exists() {
+    reporter.success(&format!("Successfully imported into '{:?}'.", dest));
+    Ok(())
+}
+
+fn ensure_assembly(
+    local_path: &Path,
+    ctx: &ProjectContext,
+    reporter: &Reporter,
+    fs: &FileSystem,
+    env: &Environment,
+) -> anyhow::Result<()> {
+    let already_has_asmdef = std::fs::read_dir(local_path)
+        .map(|entries| {
+            entries
+                .filter_map(Result::ok)
+                .any(|e| e.path().extension().is_some_and(|ext| ext == "asmdef"))
+        })
+        .unwrap_or(false);
+    if !already_has_asmdef {
+        let assembly_name = local_path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or(&ctx.project_name);
         create_assembly_definition(
-            &local_path,
+            local_path,
             constants::ASSEMBLY_DEF_RUNTIME_JINJA,
-            &ctx,
-            &reporter,
-            &fs,
+            ctx,
+            reporter,
+            fs,
             "runtime",
-            "utils",
+            assembly_name,
             None,
-            &Environment::new(),
+            env,
         )?;
     }
-
     Ok(())
+}
+
+fn write_embedded_files<T: rust_embed::RustEmbed>(
+    dest_dir: &Path,
+    fs: &FileSystem,
+) -> anyhow::Result<()> {
+    fs.create_dirs(dest_dir)?;
+    for file_path in T::iter() {
+        let file = T::get(&file_path)
+            .ok_or_else(|| anyhow::anyhow!("embedded file '{}' listed but not found", file_path))?;
+        let dest_file = dest_dir.join(file_path.as_ref());
+        if let Some(parent) = dest_file.parent() {
+            fs.create_dirs(parent)?;
+        }
+        let content = std::str::from_utf8(&file.data)
+            .with_context(|| format!("Embedded file '{}' is not valid UTF-8", file_path))?
+            .to_string();
+        fs.write_to_file(&content, &dest_file)?;
+    }
+    Ok(())
+}
+
+pub enum GitHubTarget {
+    Directory {
+        repo_url: String,
+        branch: String,
+        path_in_repo: String,
+    },
+    File {
+        repo_url: String,
+        branch: String,
+        path_in_repo: String,
+    },
+}
+
+pub fn parse_github_url(input: &str) -> anyhow::Result<GitHubTarget> {
+    let cleaned = input.trim().trim_end_matches('/');
+    let cleaned = cleaned.split(['?', '#']).next().unwrap_or(cleaned);
+
+    let rest = cleaned
+        .strip_prefix("https://github.com/")
+        .ok_or_else(|| anyhow::anyhow!("Expected a github.com URL, got '{}'", input))?;
+    let mut segments = rest.split('/');
+
+    let owner = segments
+        .next()
+        .filter(|s| !s.is_empty())
+        .ok_or_else(|| anyhow::anyhow!("Could not find a repo owner in '{}'", input))?;
+    let repo = segments
+        .next()
+        .filter(|s| !s.is_empty())
+        .ok_or_else(|| anyhow::anyhow!("Could not find a repo name in '{}'", input))?
+        .trim_end_matches(".git");
+    let repo_url = format!("https://github.com/{}/{}", owner, repo);
+
+    match segments.next() {
+        None => Ok(GitHubTarget::Directory {
+            repo_url,
+            branch: "HEAD".to_string(),
+            path_in_repo: String::new(),
+        }),
+        Some(kind @ ("tree" | "blob")) => {
+            let branch = segments
+                .next()
+                .ok_or_else(|| anyhow::anyhow!("Could not find a branch in '{}'", input))?
+                .to_string();
+            let path_in_repo = segments.collect::<Vec<_>>().join("/");
+            if path_in_repo.is_empty() {
+                anyhow::bail!("Expected a path after the branch in '{}'", input);
+            }
+            Ok(if kind == "blob" {
+                GitHubTarget::File {
+                    repo_url,
+                    branch,
+                    path_in_repo,
+                }
+            } else {
+                GitHubTarget::Directory {
+                    repo_url,
+                    branch,
+                    path_in_repo,
+                }
+            })
+        }
+        Some(other) => anyhow::bail!("Unrecognized URL segment '{}' in '{}'", other, input),
+    }
 }
 
 fn fetch_directory(
     reporter: &Reporter,
     fs: &FileSystem,
     repo: &str,
+    branch: &str,
     remote_folder_path: &str,
     local_dest_path: &Path,
 ) -> anyhow::Result<()> {
+    reporter.info("Creating temporary directory for git pull");
     let temp_dir: &Path = Path::new(".uinit_temp");
-
-    // FIXME: we should always clean up the temp dir if a failure occurs anywhere in this function
-    // cleanup old temp dir if it still exists (e.g. a mid failed process)
-    reporter.info("Checking if temporary directory already exists.");
-    if Path::new(temp_dir).exists() {
-        fs.remove_dir_recursive(&temp_dir)?;
+    if temp_dir.exists() {
+        fs.remove_dir_recursive(temp_dir)?;
     }
 
-    // Initialize and add remote to a temp directory
-    // We pull the repo into the temp directory then move files to the correct destination in the project
-    reporter.info("Initialising new temp git repo.");
+    reporter.info("Git: Initialising git in temporary directory");
     Command::new("git").arg("init").arg(temp_dir).output()?;
-    let cmd_dir = Path::new(temp_dir);
-
-    reporter.info("Writing git config.");
+    let cmd_dir = temp_dir;
+    reporter.info("Git: Adding repo origin as remote");
     Command::new("git")
         .current_dir(cmd_dir)
         .args(["remote", "add", "origin", repo])
         .output()?;
-
-    // Enable sparse-checkout
-    reporter.info("Enabling sparse checkout.");
     Command::new("git")
         .current_dir(cmd_dir)
         .args(["sparse-checkout", "init", "--cone"])
         .output()?;
-
-    // Set the specific path to fetch so that we don't pull the whole repo. We need sparse-checkout for this
-    // Note: remote_folder_path must match the repo root structure exactly
-    reporter.info("Setting sparse-checkout remote path.");
     Command::new("git")
         .current_dir(cmd_dir)
         .args(["sparse-checkout", "set", remote_folder_path])
         .output()?;
 
-    // Pull using HEAD to auto-detect main/master
-    reporter.info("Downloading files from from git remote...");
+    reporter.info("Pulling directory with sparse checkout");
     let pull_status = Command::new("git")
         .current_dir(cmd_dir)
-        .args(["pull", "--depth", "1", "origin", "HEAD"])
+        .args(["pull", "--depth", "1", "origin", branch])
         .status()?;
-
     if !pull_status.success() {
-        anyhow::bail!("Git pull failed. Check your internet connection or repository URL.");
-    }
-
-    // Copy to the correct path in the project files
-    let downloaded_path = cmd_dir.join(remote_folder_path);
-    if downloaded_path.exists() && downloaded_path.is_dir() {
-        let folder_name = Path::new(remote_folder_path)
-            .file_name()
-            .ok_or_else(|| anyhow::anyhow!("Invalid remote path"))?;
-
-        let final_local_path = local_dest_path.join(folder_name);
-
-        reporter.info("Copying pulled files intto the project.");
-        fs.copy_dir_recursive(&downloaded_path, &final_local_path)?;
-    } else {
-        // Debug: List files to see what Git actually pulled
-        reporter.info("Oops, looks like git didn't pull everything correctly.");
-        let entries = std::fs::read_dir(cmd_dir)?
-            .map(|res| res.map(|e| e.path()))
-            .collect::<Result<Vec<_>, std::io::Error>>()?;
-
-        entries.iter().for_each(|f| {
-            reporter.info(&format!("Pulled {:?}.", f));
-        });
-
         anyhow::bail!(
-            "Directory '{}' not found in downloaded content. Found: {:?}",
-            remote_folder_path,
-            entries
+            "Git pull failed for branch '{}'. Check the URL and branch name.",
+            branch
         );
     }
 
-    // cleanup the temp directory
-    reporter.info("Cleanup: Deleting temporary git repo.");
+    let downloaded_path = cmd_dir.join(remote_folder_path);
+    if downloaded_path.exists() {
+        reporter.info("Copying pulled files into target destination path");
+        fs.copy_dir_recursive(&downloaded_path, local_dest_path)?;
+    } else {
+        anyhow::bail!(
+            "Path '{}' not found on branch '{}' of {}.",
+            remote_folder_path,
+            branch,
+            repo
+        );
+    }
+
+    reporter.info("Cleaning up temporary directory");
     fs.remove_dir_recursive(temp_dir)?;
     Ok(())
 }
@@ -284,65 +305,57 @@ fn fetch_file(
     reporter: &Reporter,
     fs: &FileSystem,
     repo: &str,
+    branch: &str,
     remote_file_path: &str,
-    local_dest_dir: &Path,
+    local_dest_path: &Path,
 ) -> anyhow::Result<()> {
+    reporter.info("Creating temporary directory for git pull");
     let temp_dir: &Path = Path::new(".uinit_temp");
-
-    reporter.info("Checking if temporary directory already exists.");
     if temp_dir.exists() {
-        fs.remove_dir_recursive(temp_dir)
-            .context("Failed to clean up old temp directory")?;
+        fs.remove_dir_recursive(temp_dir)?;
     }
 
-    reporter.info("Initialising new temp git repo.");
+    reporter.info("Git: Initialising git in temporary directory");
+    Command::new("git").arg("init").arg(temp_dir).output()?;
+    let cmd_dir = temp_dir;
+    reporter.info("Git: Adding repo origin as remote");
     Command::new("git")
-        .arg("init")
-        .arg(&temp_dir)
-        .output()
-        .context("Failed to init git")?;
+        .current_dir(cmd_dir)
+        .args(["remote", "add", "origin", repo])
+        .output()?;
+    Command::new("git")
+        .current_dir(cmd_dir)
+        .args(["sparse-checkout", "init", "--no-cone"])
+        .output()?;
+    Command::new("git")
+        .current_dir(cmd_dir)
+        .args(["sparse-checkout", "set", remote_file_path])
+        .output()?;
 
-    let cmd_dir = Path::new(temp_dir);
-    let run_git = |args: &[&str]| {
-        Command::new("git")
-            .current_dir(cmd_dir)
-            .args(args)
-            .output()
-            .with_context(|| format!("Git command failed: git {:?}", args))
-    };
+    let pull_status = Command::new("git")
+        .current_dir(cmd_dir)
+        .args(["pull", "--depth", "1", "origin", branch])
+        .status()?;
+    if !pull_status.success() {
+        anyhow::bail!(
+            "Git pull failed for branch '{}'. Check the URL and branch name.",
+            branch
+        );
+    }
 
-    run_git(&["remote", "add", "origin", repo])?;
-    run_git(&["config", "core.sparseCheckout", "true"])?;
-
-    reporter.info("Initialising sparse-checkout new temp git repo.");
-    let sparse_info = cmd_dir.join(".git/info/sparse-checkout");
-    fs.write_to_file(&format!("{}\n", remote_file_path), &sparse_info)?;
-
-    reporter.info("Downloading files from git remote...");
-    run_git(&["pull", "--depth", "1", "origin", "HEAD"])?;
-
-    reporter.info("Making sure file exists locally.");
     let file_name = Path::new(remote_file_path)
         .file_name()
         .ok_or_else(|| anyhow::anyhow!("Invalid remote file path: {}", remote_file_path))?;
 
     let downloaded_file = cmd_dir.join(remote_file_path);
-    let target_path = local_dest_dir.join(file_name);
+    reporter.info("Ensuring destination path exists");
+    fs.create_dirs(local_dest_path)?;
+    let target_path = local_dest_path.join(file_name); // file lands inside the given directory, keeps its name
 
-    reporter.info("Making sure file exists locally.");
-    if downloaded_file.is_file() {
-        reporter.info("Creating target directory inside project.");
-        fs.create_dirs(local_dest_dir)?;
+    reporter.info("Copying pulled files into target destination path");
+    fs.copy_file(&downloaded_file, &target_path)?;
 
-        reporter.info("Cpying downloading file into target directory inside project.");
-        fs.copy_file(&downloaded_file, &target_path)?;
-
-        reporter.success(&format!("Successfully imported: {}", target_path.display()));
-    } else {
-        anyhow::bail!("File not found in repository at path: {}", remote_file_path);
-    }
-
-    reporter.info("Cleanup: Deleting temporary git repo.");
-    let _ = fs.remove_dir_recursive(temp_dir);
+    reporter.info("Cleaning up temporary directory");
+    fs.remove_dir_recursive(temp_dir)?;
     Ok(())
 }

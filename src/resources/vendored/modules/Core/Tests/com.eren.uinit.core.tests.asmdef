@@ -1,0 +1,23 @@
+{
+  "allowUnsafeCode": false,
+  "autoReferenced": true,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "excludePlatforms": [],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "name": "Eren.Uinit.Core.Tests",
+  "noEngineReferences": false,
+  "overrideReferences": false,
+  "precompiledReferences": [
+    "Moq.dll",
+    "nunit.framework.dll"
+  ],
+  "references": [
+    "Eren.Uinit.Core"
+  ],
+  "rootNamespace": "Uinit.Core.Tests",
+  "versionDefines": []
+}

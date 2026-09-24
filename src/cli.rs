@@ -1,6 +1,6 @@
-use clap::{Parser, Subcommand};
+use clap::{Args, Parser, Subcommand};
 
-use crate::enums::{AssetCategory, CiHost, ProjectType, WorkflowType};
+use crate::enums::{CiHost, ProjectType, WorkflowType};
 
 #[derive(Parser)]
 #[command(author, version, about = "Bootstrap Unity projects faster", long_about = None)]
@@ -56,19 +56,28 @@ pub enum Commands {
         #[arg(long)]
         no_tests: bool,
     },
-    /// Import a remote utility or script via alias
-    Import {
-        /// The alias defined in your remote/local registry
-        alias: String,
+    /// Add a module or bundle of dependencies
+    Add {
+        #[command(flatten)]
+        target: AddTarget,
 
-        /// The local path to add the imported scripts to
         #[arg(long)]
+        /// Path starting at project root where the contents of the module will be imported into. E.g. Assets/Scripts/MyModule
         path: Option<String>,
     },
+    /// Import a remote utility or script via alias
+    Import {
+        /// Git URL path of the file or directory you wish to pull into your project
+        url: String,
+
+        #[arg(short, long)]
+        /// Path starting at project root where the contents of the remote directory will be imported into. E.g. Assets/Scripts/MyModule
+        path: String,
+    },
     /// Manage project-level aliases
-    Remote {
+    Alias {
         #[command(subcommand)]
-        action: RemotesActions,
+        action: AliasActions,
     },
     /// Run diagnostic on your Unity project setup
     Doctor {
@@ -89,35 +98,19 @@ pub enum Commands {
     },
 }
 
+#[derive(Args)]
+#[group(required = true, multiple = false)]
+pub struct AddTarget {
+    #[arg(long)]
+    pub bundle: Option<String>,
+    #[arg(long)]
+    pub module: Option<String>,
+}
+
 #[derive(Subcommand)]
-pub enum RemotesActions {
+pub enum AliasActions {
     /// List all available aliases
     List {},
-
-    /// Add a new alias mapping to the local config
-    Add {
-        /// Alias to be used when using ``uinit add``
-        alias: String,
-
-        /// Remote repository URL
-        #[arg(short, long, value_enum)]
-        repo: String,
-
-        /// Path to the module/tool/util from the repository root
-        #[arg(short, long, value_enum)]
-        path: String,
-
-        /// Category changes how these assets are imported and their default locations
-        #[arg(short, long, value_enum)]
-        category: AssetCategory,
-    },
-
-    /// Remove an alias from the local config
-    #[command(alias = "rm")]
-    Remove {
-        /// Alias to be removed
-        alias: String,
-    },
 }
 
 #[derive(Subcommand)]

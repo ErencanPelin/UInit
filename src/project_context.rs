@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{alias_registry::AliasRegistry, config::UinitConfig, enums::ProjectType};
+use crate::{config::UinitConfig, enums::ProjectType};
 
 #[derive(Serialize, Clone, Deserialize, Debug)]
 pub struct ProjectContext {
@@ -33,7 +33,6 @@ impl From<&ProjectContext> for UinitConfig {
                 email: ctx.email.clone(),
                 year: ctx.year,
             },
-            custom_aliases: AliasRegistry::new(),
         }
     }
 }

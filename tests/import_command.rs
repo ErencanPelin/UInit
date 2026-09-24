@@ -17,7 +17,7 @@ fn import_module_does_not_download_expected_files_when_using_dry_run() {
     Command::cargo_bin("uinit")
         .unwrap()
         .current_dir(project.path())
-        .args(&["import", "statemachines", "--dry-run"])
+        .args(&["import", "statemachines-remote", "--dry-run"])
         .assert()
         .success();
 
@@ -42,7 +42,7 @@ fn import_util_does_not_download_expected_files_when_using_dry_run() {
     Command::cargo_bin("uinit")
         .unwrap()
         .current_dir(project.path())
-        .args(&["import", "core", "--dry-run"])
+        .args(&["import", "core-remote", "--dry-run"])
         .assert()
         .success();
 
@@ -50,4 +50,24 @@ fn import_util_does_not_download_expected_files_when_using_dry_run() {
     for folder in &["Assets/MyGameProject/Scripts/Utils"] {
         assert!(!project.path().join(folder).is_dir());
     }
+}
+
+#[test]
+fn import_embedded_util_does_create_expected_files() {
+    let project = common::FakeUnityProject::new();
+
+    Command::cargo_bin("uinit")
+        .unwrap()
+        .current_dir(project.path())
+        .args(&["init", "--template", "game", "MyGameProject"])
+        .assert()
+        .success();
+
+    // download cmd from alias
+    Command::cargo_bin("uinit")
+        .unwrap()
+        .current_dir(project.path())
+        .args(&["import", "core", "--dry-run"])
+        .assert()
+        .success();
 }
