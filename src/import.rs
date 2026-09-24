@@ -61,7 +61,7 @@ pub fn handle_add(
 
     reporter.info(&format!(
         "Copying embedded files to destination: {:?}",
-        &local_path
+        local_path
     ));
 
     match source {
@@ -72,7 +72,7 @@ pub fn handle_add(
     reporter.info("Creating assembly definition file if one does not already exist");
     ensure_assembly(
         &local_path,
-        &project_context,
+        project_context,
         reporter,
         fs,
         &Environment::new(),
@@ -80,7 +80,7 @@ pub fn handle_add(
 
     reporter.success(&format!(
         "Successfully added embedded module '{}' to project at {:?}",
-        name, &local_path
+        name, local_path
     ));
 
     Ok(())

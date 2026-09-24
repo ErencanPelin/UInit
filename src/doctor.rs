@@ -27,15 +27,15 @@ pub fn handle_doctor(
     let results = [
         (
             "Project Settings",
-            validate_project_settings(&project_context, unity_project, reporter, fix)?,
+            validate_project_settings(project_context, unity_project, reporter, fix)?,
         ),
         (
             "Project Structure",
             validate_project_structure(
-                &project_context,
-                &unity_project,
-                &reporter,
-                &fs,
+                project_context,
+                unity_project,
+                reporter,
+                fs,
                 fix,
                 project_template_registry,
             )?,
@@ -123,13 +123,13 @@ fn validate_project_structure(
 
     // Check to see if dependencies match template
     reporter.info("Validating project contains dependencies from template.");
-    let project_deps = get_project_packages(&unity_project, &reporter)?;
+    let project_deps = get_project_packages(unity_project, reporter)?;
     let template_deps = &template.dependencies;
 
     for dep in template_deps {
         if !project_deps.contains_key(&dep.name) {
             if apply_fix {
-                add_package(&unity_project, &reporter, &fs, &dep.name, &dep.version)?;
+                add_package(unity_project, reporter, fs, &dep.name, &dep.version)?;
             } else {
                 result.push(format!("  ⚠️  Missing package dependency: {}", dep.name));
             }

@@ -27,22 +27,22 @@ pub fn init_project(
     );
 
     create_from_template(
-        &ctx,
-        &unity_project,
-        &reporter,
-        &fs,
-        &project_template_registry,
+        ctx,
+        unity_project,
+        reporter,
+        fs,
+        project_template_registry,
     )
     .with_context(|| format!("Failed to apply template: {}", ctx.project_type))?;
 
-    modify_project_settings(&ctx, &unity_project, &reporter, &fs)
+    modify_project_settings(ctx, unity_project, reporter, fs)
         .with_context(|| "Failed to update Unity ProjectSettings.asset.")?;
 
     // write config file
     reporter.info("Updating uinit.toml config file.");
     let config: UinitConfig = ctx.into();
     config
-        .save(&unity_project.root, &fs)
+        .save(&unity_project.root, fs)
         .with_context(|| "Failed to save uinit config to disk.")?;
 
     println!("\n✨ '{}' initialized successfully.", ctx.project_name);
@@ -120,9 +120,9 @@ fn create_from_template(
     // TODO: split this into its own function
     for dependency in &template.dependencies {
         add_package(
-            &unity_project,
-            &reporter,
-            &fs,
+            unity_project,
+            reporter,
+            fs,
             &dependency.name,
             &dependency.version,
         )?;

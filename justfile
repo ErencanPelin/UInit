@@ -45,4 +45,4 @@ init-test-game:
 check:
     cargo fmt --all
     cargo check --all -q --locked
-    cargo clippy
+    cargo clippy --fix

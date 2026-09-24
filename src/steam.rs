@@ -43,9 +43,9 @@ pub fn init_steam(
 
     // add steamworks.net to manifest.json
     add_package(
-        &unity_project,
-        &reporter,
-        &fs,
+        unity_project,
+        reporter,
+        fs,
         STEAMWORKS_PACKAGE.0,
         STEAMWORKS_PACKAGE.1,
     )?;

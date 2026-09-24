@@ -38,7 +38,7 @@ pub fn handle_add_ci_workflow(
         })?;
 
     reporter.info("Creating required folder structure");
-    let dir_path = unity_project.root.join(get_dest_path_for_ci_host(&ci_host));
+    let dir_path = unity_project.root.join(get_dest_path_for_ci_host(ci_host));
     let file_path = dir_path.join(file_name);
     fs.create_dirs(&dir_path)?;
 
@@ -84,7 +84,7 @@ pub fn list_workflows(reporter: &Reporter) -> anyhow::Result<()> {
 }
 
 fn get_dest_path_for_ci_host(ci_host: &CiHost) -> PathBuf {
-    return match ci_host {
+    match ci_host {
         CiHost::Github => PathBuf::from(".github/workflows"),
-    };
+    }
 }

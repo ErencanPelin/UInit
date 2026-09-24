@@ -44,9 +44,9 @@ pub fn init_feature(
     let runtime_assembly_name = create_assembly_definition(
         &runtime_folder,
         constants::ASSEMBLY_DEF_RUNTIME_JINJA,
-        &project_context,
-        &reporter,
-        &fs,
+        project_context,
+        reporter,
+        fs,
         "runtime",
         feature_name,
         None,
@@ -64,12 +64,12 @@ pub fn init_feature(
         create_assembly_definition(
             &editor_folder,
             constants::ASSEMBLY_DEF_EDITOR_JINJA,
-            &project_context,
-            &reporter,
-            &fs,
+            project_context,
+            reporter,
+            fs,
             "editor",
             feature_name,
-            Some(&[runtime_assembly_name.clone()]),
+            Some(std::slice::from_ref(&runtime_assembly_name)),
             &env,
         )?;
     }
@@ -85,12 +85,12 @@ pub fn init_feature(
         create_assembly_definition(
             &tests_folder,
             constants::ASSEMBLY_DEF_TESTS_JINJA,
-            &project_context,
-            &reporter,
-            &fs,
+            project_context,
+            reporter,
+            fs,
             "tests",
             feature_name,
-            Some(&[runtime_assembly_name.clone()]),
+            Some(std::slice::from_ref(&runtime_assembly_name)),
             &env,
         )?;
     }

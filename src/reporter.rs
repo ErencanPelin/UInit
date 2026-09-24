@@ -29,11 +29,11 @@ impl Reporter {
             return true;
         }
 
-        return Confirm::with_theme(&ColorfulTheme::default())
+        Confirm::with_theme(&ColorfulTheme::default())
             .with_prompt(msg)
             .default(false)
             .wait_for_newline(true)
             .interact()
-            .unwrap_or(false);
+            .unwrap_or(false)
     }
 }

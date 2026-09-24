@@ -95,8 +95,8 @@ fn main() -> anyhow::Result<()> {
                 Commands::Ci { action } => match action {
                     CiActions::List {} => ci::list_workflows(&reporter)?,
                     CiActions::Add { host, workflow } => ci::handle_add_ci_workflow(
-                        &host,
-                        &workflow,
+                        host,
+                        workflow,
                         &unity_project,
                         &reporter,
                         &fs,
@@ -130,7 +130,7 @@ fn main() -> anyhow::Result<()> {
                 )?,
 
                 Commands::Import { url, path } => {
-                    import::handle_import(&url, &path, &reporter, &fs)?;
+                    import::handle_import(url, path, &reporter, &fs)?;
                 }
 
                 Commands::Alias { action } => match action {

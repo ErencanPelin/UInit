@@ -74,7 +74,7 @@ pub fn handle_config(
         config.email = Some(email);
     }
 
-    config.save_to(&path, &fs)?;
+    config.save_to(&path, fs)?;
     reporter.success(&format!("Updated global config at {:?}", path));
     Ok(())
 }
